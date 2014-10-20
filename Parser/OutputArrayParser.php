@@ -2,8 +2,9 @@
 
 namespace Nelmio\ApiDocBundle\Parser;
 
-class OutputArrayParser implements ParserInterface
+class OutputArrayParser implements ParserInterface, PostParserInterface
 {
+    const RETURN_KEY = '[]';
 
     /**
      * @var ParserInterface
@@ -57,7 +58,22 @@ class OutputArrayParser implements ParserInterface
             'children' => $this->parser->parse($item)
         );
 
-        return array('[]' => $returnData);
+        return array(self::RETURN_KEY => $returnData);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function postParse(array $item, array $parameters)
+    {
+        $parameters = $parameters[self::RETURN_KEY]['children'];
+        if ($this->parser instanceof PostParserInterface) {
+            $parameters = $this->parser->postParse($item, $parameters);
+        }
+
+        return array(
+            self::RETURN_KEY => array('children' => $parameters)
+        );
     }
 
     /**
