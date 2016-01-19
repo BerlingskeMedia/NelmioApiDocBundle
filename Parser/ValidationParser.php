@@ -140,15 +140,27 @@ class ValidationParser implements ParserInterface, PostParserInterface
                 );
             } else if (!empty($data['discriminatorClass'])) {
                 $input = array('class' => $param);
-
+                $postParse = array_intersect_key(
+                    $this->postParse($input, $data['discriminatorClass']),
+                    $parameters[$param]['discriminatorClass']
+                );
                 $parse = array_intersect_key(
                     $this->parse($input),
                     $parameters[$param]['discriminatorClass']
                 );
-
-                $parameters[$param]['discriminatorClass'] = array_merge(
-                    $parameters[$param]['discriminatorClass'], $parse
-                );
+                foreach ($postParse as $postParsedFieldName => $postParsedFieldValue) {
+                    if (isset($postParsedFieldValue['class'])) {
+                        $parameters[$param]['discriminatorClass'][$postParsedFieldName] = array_merge(
+                            $parameters[$param]['discriminatorClass'][$postParsedFieldName],
+                            $postParsedFieldValue
+                        );
+                    } else if (isset($parse[$postParsedFieldName])) {
+                        $parameters[$param]['discriminatorClass'][$postParsedFieldName] = array_merge(
+                            $parameters[$param]['discriminatorClass'][$postParsedFieldName],
+                            $parse[$postParsedFieldName]
+                        );
+                    }
+                }
             }
         }
 
