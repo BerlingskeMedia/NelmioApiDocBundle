@@ -201,6 +201,13 @@ class ValidationParser implements ParserInterface, PostParserInterface
                     $vparams['actualType'] = $this->typeMap[$constraint->type];
                 }
                 $vparams['dataType'] = $constraint->type;
+                if (class_exists($constraint->type)) {
+                    $vparams['class'] = $constraint->type;
+                    $vparams['actualType'] = DataTypes::MODEL;
+                    $parts = explode('\\', $constraint->type);
+                    $dataType = sprintf('object (%s)', end($parts));
+                    $vparams['dataType'] = $dataType;
+                }
                 break;
             case 'Email':
                 $vparams['format'][] = '{email address}';
