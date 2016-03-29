@@ -12,13 +12,13 @@
 namespace Nelmio\ApiDocBundle\Parser;
 
 use JMS\Serializer\Exclusion\GroupsExclusionStrategy;
+use JMS\Serializer\Metadata\PropertyMetadata;
+use JMS\Serializer\Metadata\VirtualPropertyMetadata;
+use JMS\Serializer\Naming\PropertyNamingStrategyInterface;
 use JMS\Serializer\SerializationContext;
 use Metadata\MetadataFactoryInterface;
 use Nelmio\ApiDocBundle\DataTypes;
 use Nelmio\ApiDocBundle\Util\DocCommentExtractor;
-use JMS\Serializer\Metadata\PropertyMetadata;
-use JMS\Serializer\Metadata\VirtualPropertyMetadata;
-use JMS\Serializer\Naming\PropertyNamingStrategyInterface;
 
 /**
  * Uses the JMS metadata factory to extract input/output model information
@@ -148,6 +148,11 @@ class JmsMetadataParser implements ParserInterface, PostParserInterface
                     if (!is_null($dataType['class']) && false === $dataType['primitive']) {
                         $params[$name]['class'] = $dataType['class'];
                     }
+                }
+
+                if (isset($item->position))
+                {
+                    $params[$name]['position'] = $item->position;
                 }
 
                 // we can use type property also for custom handlers, then we don't have here real class name
