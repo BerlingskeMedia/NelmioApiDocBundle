@@ -150,8 +150,7 @@ class JmsMetadataParser implements ParserInterface, PostParserInterface
                     }
                 }
 
-                if (isset($item->position))
-                {
+                if (isset($item->position)) {
                     $params[$name]['position'] = $item->position;
                 }
 
