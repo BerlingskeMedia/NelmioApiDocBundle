@@ -4,6 +4,7 @@ namespace Nelmio\ApiDocBundle\Tests\Fixtures\Form;
 
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\ChoiceList\SimpleChoiceList;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
@@ -22,10 +23,14 @@ class ImprovedTestType extends AbstractType
             ->add('dt5', 'datetime', array('format' => 'M/d/y H:i:s'))
             ->add('d1', 'date', array('format' => \IntlDateFormatter::MEDIUM))
             ->add('d2', 'date', array('format' => 'd-M-y'))
-            ->add('c1', 'choice', array('choices' => array('m' => 'Male', 'f' => 'Female')))
-            ->add('c2', 'choice', array('choices' => array('m' => 'Male', 'f' => 'Female'), 'multiple' => true))
-            ->add('c3', 'choice', array('choices' => array()))
-            ->add('c4', 'choice', array('choice_list' => new SimpleChoiceList(array('foo' => 'bar', 'bazgroup' => array('baz' => 'Buzz')))))
+            ->add('c1', ChoiceType::class, array('choices' => array('m' => 'Male', 'f' => 'Female'), 'choices_as_values' => true))
+            ->add('c2', ChoiceType::class, array('choices' => array('m' => 'Male', 'f' => 'Female'), 'choices_as_values' => true, 'multiple' => true))
+            ->add('c3', ChoiceType::class, array('choices' => array()))
+            ->add('c4', ChoiceType::class, array(
+                    'choices' => array('foo' => 'bar', 'bazgroup' => array('baz' => 'Buzz')),
+                    'choices_as_values' => true
+                )
+            )
         ;
     }
 

@@ -70,8 +70,8 @@ class ValidationParserTest extends WebTestCase
             array(
                 'property' => 'type',
                 'expected' => array(
-                    'dataType' => 'DateTime',
-                    'actualType' => DataTypes::DATETIME,
+                    'dataType' => 'object (DateTime)',
+                    'actualType' => DataTypes::MODEL,
                     'default' => null,
                 )
             ),

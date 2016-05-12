@@ -11,6 +11,7 @@
 
 namespace Nelmio\ApiDocBundle\Tests\Formatter;
 
+use Nelmio\ApiDocBundle\DataTypes;
 use Nelmio\ApiDocBundle\Tests\WebTestCase;
 
 class SimpleFormatterWithIntersectKeyTest extends SimpleFormatterTest
@@ -1102,7 +1103,7 @@ With multiple lines.",
                         array (
                             'method' => 'ANY',
                             'uri' => '/secure-route',
-                            'https' => true,
+                            'https' => false,
                             'authentication' => false,
                             'authenticationRoles' =>
                                 array (
@@ -1281,9 +1282,9 @@ With multiple lines.",
                                                     'b' =>
                                                         array (
                                                             'default' => NULL,
-                                                            'actualType' => 'datetime',
+                                                            'actualType' => DataTypes::MODEL,
                                                             'subType' => NULL,
-                                                            'dataType' => 'DateTime',
+                                                            'dataType' => 'object (DateTime)',
                                                             'readonly' => NULL,
                                                             'required' => NULL,
                                                         ),
@@ -1329,9 +1330,9 @@ With multiple lines.",
                                                     'b' =>
                                                         array (
                                                             'default' => NULL,
-                                                            'actualType' => 'datetime',
+                                                            'actualType' => DataTypes::MODEL,
                                                             'subType' => NULL,
-                                                            'dataType' => 'DateTime',
+                                                            'dataType' => 'object (DateTime)',
                                                             'readonly' => NULL,
                                                             'required' => NULL,
                                                         ),

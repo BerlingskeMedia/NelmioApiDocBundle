@@ -1017,7 +1017,7 @@ With multiple lines.',
                 array(
                     'method' => 'ANY',
                     'uri' => '/secure-route',
-                    'https' => true,
+                    'https' => false,
                     'authentication' => false,
                     'authenticationRoles' => array(),
                     'deprecated' => false,
@@ -1153,12 +1153,13 @@ With multiple lines.',
                     'deprecated' => false,
                     'response' => array (
                         'bar' => array(
-                            'dataType' => 'DateTime',
-                            'actualType' => DataTypes::DATETIME,
+                            'dataType' => 'object (DateTime)',
+                            'actualType' => DataTypes::MODEL,
                             'subType' => null,
                             'default' => null,
                             'required' => null,
-                            'readonly' => null
+                            'readonly' => null,
+                            'children' => Array()
                         ),
                         'number' => array(
                             'dataType' => 'DateTime',
@@ -1189,12 +1190,13 @@ With multiple lines.',
                                     'readonly' => null
                                 ),
                                 'b' => array(
-                                    'dataType' => 'DateTime',
-                                    'actualType' => DataTypes::DATETIME,
+                                    'dataType' => 'object (DateTime)',
+                                    'actualType' => DataTypes::MODEL,
                                     'subType' => null,
                                     'default' => null,
                                     'required' => null,
-                                    'readonly' => null
+                                    'readonly' => null,
+                                    'children' => Array()
                                 )
                             )
                         ),
@@ -1289,12 +1291,13 @@ With multiple lines.',
                     'deprecated' => false,
                     'response' => array (
                         'bar' => array(
-                            'dataType' => 'DateTime',
-                            'actualType' => DataTypes::DATETIME,
+                            'dataType' => 'object (DateTime)',
+                            'actualType' => DataTypes::MODEL,
                             'subType' => null,
                             'default' => null,
                             'required' => null,
-                            'readonly' => null
+                            'readonly' => null,
+                            'children' => Array()
                         ),
                         'number' => array(
                             'dataType' => 'DateTime',
@@ -1325,12 +1328,13 @@ With multiple lines.',
                                     'readonly' => null
                                 ),
                                 'b' => array(
-                                    'dataType' => 'DateTime',
-                                    'actualType' => DataTypes::DATETIME,
+                                    'dataType' => 'object (DateTime)',
+                                    'actualType' => DataTypes::MODEL,
                                     'subType' => null,
                                     'default' => null,
                                     'required' => null,
-                                    'readonly' => null
+                                    'readonly' => null,
+                                    'children' => Array()
                                 )
                             )
                         ),

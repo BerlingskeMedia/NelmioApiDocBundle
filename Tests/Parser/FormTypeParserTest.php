@@ -379,7 +379,7 @@ class FormTypeParserTest extends \PHPUnit_Framework_TestCase
                         'subType' => null,
                         'default' => null,
                         'required' => true,
-                        'description' => '',
+                        'description' => null,
                         'readonly' => false,
                         'format' => json_encode(array('foo' => 'bar', 'baz' => 'Buzz')),
                     ),
@@ -395,7 +395,7 @@ class FormTypeParserTest extends \PHPUnit_Framework_TestCase
                             'subType' => 'Nelmio\\ApiDocBundle\\Tests\\Fixtures\\Form\\SimpleType',
                             'default' => null,
                             'required' => true,
-                            'description' => '',
+                            'description' => null,
                             'readonly' => false,
                             'children' =>
                                 array (
@@ -426,7 +426,7 @@ class FormTypeParserTest extends \PHPUnit_Framework_TestCase
                                             'subType' => NULL,
                                             'default' => null,
                                             'required' => true,
-                                            'description' => '',
+                                            'description' => null,
                                             'readonly' => false,
                                             'format' => '{"x":"X","y":"Y","z":"Z"}',
                                         ),
