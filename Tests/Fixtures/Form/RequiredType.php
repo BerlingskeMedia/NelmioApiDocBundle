@@ -16,18 +16,15 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 
 /**
- * Class CompoundType
+ * Class SimpleType
  *
- * @author Bez Hermoso <bez@activelamp.com>
+ * @author Lucas van Lierop <lucas@vanlierop.org>
  */
-class CompoundType extends AbstractType
+class RequiredType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        $builder
-            ->add('sub_form', LegacyFormHelper::isLegacy() ? new SimpleType() : __NAMESPACE__.'\SimpleType')
-            ->add('a', LegacyFormHelper::getType('Symfony\Component\Form\Extension\Core\Type\NumberType'))
-            ;
+        $builder->add('required_field', LegacyFormHelper::getType('Symfony\Component\Form\Extension\Core\Type\TextType'), array('required' => true));
     }
 
     /**

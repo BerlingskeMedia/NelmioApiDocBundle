@@ -12,23 +12,8 @@
 namespace Nelmio\ApiDocBundle\Tests\Fixtures\Model;
 
 use Symfony\Component\Validator\Constraints as Assert;
-use JMS\Serializer\Annotation as JMS;
 
-class Test
+class EntityTest
 {
-    /**
-     * @JMS\Type("string")
-     * @Assert\Length(min="foo");
-     * @Assert\NotBlank
-     * @Assert\Type("string")
-     */
-    public $a = 'nelmio';
 
-    /**
-     * @Assert\Type("DateTime")
-     * @JMS\Type("DateTime")
-     */
-    public $b;
-
-    public $c;
 }

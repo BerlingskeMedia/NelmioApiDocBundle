@@ -57,6 +57,10 @@ class AppKernel extends Kernel
     public function registerContainerConfiguration(LoaderInterface $loader)
     {
         $loader->load(__DIR__.'/config/'.$this->environment.'.yml');
+        // If symfony/framework-bundle > 3.0
+        if (!class_exists('Symfony\Bundle\FrameworkBundle\Command\RouterApacheDumperCommand')) {
+            $loader->load(__DIR__.'/config/twig_assets.yml');
+        }
     }
 
     public function serialize()

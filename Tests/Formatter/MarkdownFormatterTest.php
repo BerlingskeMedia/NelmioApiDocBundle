@@ -213,7 +213,7 @@ _create another test_
 
 dependency_type:
 
-  * type: object (dependency_type)
+  * type: object (DependencyType)
   * required: true
 
 dependency_type[a]:
@@ -346,7 +346,7 @@ _Testing return_
 
 dependency_type:
 
-  * type: object (dependency_type)
+  * type: object (DependencyType)
 
 dependency_type[a]:
 
@@ -556,22 +556,6 @@ bar:
 
   * type: DateTime
 
-objects[]:
-
-  * type: array of objects (Test)
-
-objects[][a]:
-
-  * type: string
-
-objects[][b]:
-
-  * type: DateTime
-
-number:
-
-  * type: DateTime
-
 related:
 
   * type: object (Test)
@@ -582,7 +566,19 @@ related[a]:
 
 related[b]:
 
-  * type: DateTime
+  * type: object (DateTime)
+
+objects[]:
+
+  * type: array of objects (Test)
+
+objects[][a]:
+
+  * type: string
+
+objects[][b]:
+
+  * type: object (DateTime)
 
 
 ### `ANY` /z-return-selected-parsers-input ###
@@ -622,22 +618,6 @@ bar:
 
   * type: DateTime
 
-objects[]:
-
-  * type: array of objects (Test)
-
-objects[][a]:
-
-  * type: string
-
-objects[][b]:
-
-  * type: DateTime
-
-number:
-
-  * type: DateTime
-
 related:
 
   * type: object (Test)
@@ -648,7 +628,19 @@ related[a]:
 
 related[b]:
 
-  * type: DateTime
+  * type: object (DateTime)
+
+objects[]:
+
+  * type: array of objects (Test)
+
+objects[][a]:
+
+  * type: string
+
+objects[][b]:
+
+  * type: object (DateTime)
 MARKDOWN;
 
         $this->assertEquals($expected, $result);

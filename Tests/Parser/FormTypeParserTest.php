@@ -5,9 +5,10 @@ use Nelmio\ApiDocBundle\DataTypes;
 use Nelmio\ApiDocBundle\Form\Extension\DescriptionFormTypeExtension;
 use Nelmio\ApiDocBundle\Parser\FormTypeParser;
 use Nelmio\ApiDocBundle\Tests\Fixtures;
+use Nelmio\ApiDocBundle\Tests\Fixtures\Form\DependencyType;
+use Nelmio\ApiDocBundle\Util\LegacyFormHelper;
 use Symfony\Component\Form\Extension\Core\CoreExtension;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
-use Symfony\Component\Form\FormFactory;
 use Symfony\Component\Form\FormFactoryBuilder;
 use Symfony\Component\Form\ResolvedFormTypeFactory;
 
@@ -23,18 +24,37 @@ class FormTypeParserTest extends \PHPUnit_Framework_TestCase
         $formFactoryBuilder->setResolvedTypeFactory($resolvedTypeFactory);
         $formFactoryBuilder->addExtension(new CoreExtension());
         $formFactoryBuilder->addTypeExtension(new DescriptionFormTypeExtension());
+        $formFactoryBuilder->addType(new DependencyType(array('foo')));
         $formFactory = $formFactoryBuilder->getFormFactory();
-        $formTypeParser = new FormTypeParser($formFactory);
+        $formTypeParser = new FormTypeParser($formFactory, $entityToChoice = true);
+
+        set_error_handler(array('Nelmio\ApiDocBundle\Tests\WebTestCase', 'handleDeprecation'));
+        trigger_error('test', E_USER_DEPRECATED);
+
         $output = $formTypeParser->parse($typeName);
+        restore_error_handler();
 
         $this->assertEquals($expected, $output);
     }
 
     public function dataTestParse()
     {
+        $entityData = array_merge(
+            array(
+                'dataType' => 'choice',
+                'actualType' => DataTypes::ENUM,
+                'subType' => null,
+                'default' => null,
+                'required' => true,
+                'description' => '',
+                'readonly' => false,
+            ),
+            LegacyFormHelper::isLegacy() ? array() : array('format' => '{"foo":"bar","bazgroup":{"baz":"Buzz"}}',)
+        );
+
         return array(
             array(
-                array('class' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Form\TestType'),
+                array('class' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Form\TestType', 'options' => array()),
                 array(
                     'a' => array(
                         'dataType' => 'string',
@@ -75,7 +95,7 @@ class FormTypeParserTest extends \PHPUnit_Framework_TestCase
                 )
             ),
             array(
-                array('class' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Form\CollectionType'),
+                array('class' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Form\CollectionType', 'options' => array(),),
                 array(
                     'collection_type' => array(
                         'dataType' => 'object (CollectionType)',
@@ -150,6 +170,7 @@ class FormTypeParserTest extends \PHPUnit_Framework_TestCase
                 array(
                     'class' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Form\CollectionType',
                     'name' => '',
+                    'options' => array(),
                 ),
                 array(
                     'a' => array(
@@ -214,6 +235,7 @@ class FormTypeParserTest extends \PHPUnit_Framework_TestCase
                 array(
                     'class' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Form\CollectionType',
                     'name' => null,
+                    'options' => array(),
                 ),
                 array(
                     'a' => array(
@@ -275,7 +297,7 @@ class FormTypeParserTest extends \PHPUnit_Framework_TestCase
                 ),
             ),
             array(
-                array('class' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Form\ImprovedTestType'),
+                array('class' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Form\ImprovedTestType', 'options' => array(),),
                 array(
                     'dt1' => array(
                         'dataType' => 'datetime',
@@ -381,13 +403,14 @@ class FormTypeParserTest extends \PHPUnit_Framework_TestCase
                         'required' => true,
                         'description' => null,
                         'readonly' => false,
-                        'format' => json_encode(array('foo' => 'bar', 'baz' => 'Buzz')),
+                        'format' => json_encode(array('foo' => 'bar', 'bazgroup' => array('baz' => 'Buzz'),)),
                     ),
+                    'e1' => $entityData
                 ),
             ),
             array(
-                array('class' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Form\CompoundType'),
-                array (
+                array('class' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Form\CompoundType', 'options' => array(),),
+                array(
                     'sub_form' =>
                         array (
                             'dataType' => 'object (SimpleType)',
@@ -475,7 +498,7 @@ class FormTypeParserTest extends \PHPUnit_Framework_TestCase
                 ),
             ),
             array(
-                array('class' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Form\RequireConstructionType'),
+                array('class' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Form\RequireConstructionType', 'options' => array(),),
                 array(
                     'require_construction_type' => array(
                         'dataType' => 'object (RequireConstructionType)',
@@ -500,7 +523,7 @@ class FormTypeParserTest extends \PHPUnit_Framework_TestCase
                 ),
             ),
             array(
-                array('class' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Form\DependencyType'),
+                array('class' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Form\DependencyType', 'options' => array(),),
                 array(
                     'dependency_type' => array(
                         'dataType' => 'object (DependencyType)',

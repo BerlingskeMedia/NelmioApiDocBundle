@@ -11,20 +11,18 @@
 
 namespace Nelmio\ApiDocBundle\Tests\Fixtures\Model;
 
-use Symfony\Component\Validator\Constraints as Assert;
-
-class ImprovedTest
+class JsonSerializableOptionalConstructorTest implements \JsonSerializable
 {
-    public $dt1;
-    public $dt2;
-    public $dt3;
-    public $dt4;
-    public $dt5;
-    public $d1;
-    public $d2;
-    public $c1;
-    public $c2;
-    public $c3;
-    public $c4;
-    public $e1;
+    public function __construct($optional = null)
+    {
+
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function jsonSerialize()
+    {
+        return array();
+    }
 }
