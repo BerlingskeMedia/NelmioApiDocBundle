@@ -35,7 +35,7 @@
             <arg value="check"/>
             <arg value="--fail"/>
             <arg value="--no-cache"/>
-            <arg value="src/"/>
+            <arg value="./"/>
             <arg value="vendor/"/>
         </exec>
     </target>
