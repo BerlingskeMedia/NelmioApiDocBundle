@@ -13,7 +13,8 @@ namespace Nelmio\ApiDocBundle\Parser;
 
 use Nelmio\ApiDocBundle\DataTypes;
 use Symfony\Component\Validator\Exception\ConstraintDefinitionException;
-use Symfony\Component\Validator\MetadataFactoryInterface;
+use Symfony\Component\Validator\Mapping\Factory\MetadataFactoryInterface;
+use Symfony\Component\Validator\MetadataFactoryInterface as LegacyMetadataFactoryInterface;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints\Type;
 
@@ -23,7 +24,7 @@ use Symfony\Component\Validator\Constraints\Type;
 class ValidationParser implements ParserInterface, PostParserInterface
 {
     /**
-     * @var \Symfony\Component\Validator\MetadataFactoryInterface
+     * @var MetadataFactoryInterface
      */
     protected $factory;
 
@@ -45,10 +46,13 @@ class ValidationParser implements ParserInterface, PostParserInterface
     /**
      * Requires a validation MetadataFactory.
      *
-     * @param MetadataFactoryInterface $factory
+     * @param MetadataFactoryInterface|LegacyMetadataFactoryInterface $factory
      */
-    public function __construct(MetadataFactoryInterface $factory)
+    public function __construct($factory)
     {
+        if (!($factory instanceof MetadataFactoryInterface) && !($factory instanceof LegacyMetadataFactoryInterface)) {
+            throw new \InvalidArgumentException('Argument 1 of %s constructor must be either an instance of Symfony\Component\Validator\Mapping\Factory\MetadataFactoryInterface or Symfony\Component\Validator\MetadataFactoryInterface.');
+        }
         $this->factory = $factory;
     }
 
@@ -113,9 +117,17 @@ class ValidationParser implements ParserInterface, PostParserInterface
             }
 
             // check for nested classes with All constraint
-            if (isset($vparams['class']) && !in_array($vparams['class'], $visited) && null !== $this->factory->getMetadataFor($vparams['class'])) {
-                $visited[] = $vparams['class'];
-                $vparams['children'] = $this->doParse($vparams['class'], $visited);
+            if (isset($vparams['class']) && null !== $this->factory->getMetadataFor($vparams['class'])) {
+                if (!array_key_exists($vparams['class'], $visited)) {
+                    $children = $this->doParse($vparams['class'], $visited);
+                    if (!empty($children)) {
+                        $vparams['children'] = $children;
+                    }
+                    $visited[$vparams['class']] = $vparams;
+                }
+                else{
+                    $vparams = $visited[$vparams['class']];
+                }
             }
 
             $params[$property] = $vparams;

@@ -11,6 +11,7 @@
 
 namespace Nelmio\ApiDocBundle\Tests\Formatter;
 
+use Nelmio\ApiDocBundle\DataTypes;
 use Nelmio\ApiDocBundle\Tests\WebTestCase;
 
 class SimpleFormatterWithIntersectKeyTest extends SimpleFormatterTest
@@ -423,9 +424,9 @@ class SimpleFormatterWithIntersectKeyTest extends SimpleFormatterTest
                                             'readonly' => false,
                                             'description' => '',
                                             'default' => NULL,
-                                            'dataType' => 'object (dependency_type)',
+                                            'dataType' => 'object (DependencyType)',
                                             'actualType' => 'model',
-                                            'subType' => 'dependency_type',
+                                            'subType' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Form\DependencyType',
                                             'children' =>
                                                 array (
                                                     'a' =>
@@ -770,9 +771,9 @@ With multiple lines.",
                                             'readonly' => false,
                                             'description' => '',
                                             'default' => NULL,
-                                            'dataType' => 'object (dependency_type)',
+                                            'dataType' => 'object (DependencyType)',
                                             'actualType' => 'model',
-                                            'subType' => 'dependency_type',
+                                            'subType' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Form\DependencyType',
                                             'children' =>
                                                 array (
                                                     'a' =>
@@ -1102,7 +1103,7 @@ With multiple lines.",
                         array (
                             'method' => 'ANY',
                             'uri' => '/secure-route',
-                            'https' => true,
+                            'https' => false,
                             'authentication' => false,
                             'authenticationRoles' =>
                                 array (
@@ -1257,8 +1258,9 @@ With multiple lines.",
                                             'actualType' => 'datetime',
                                             'subType' => NULL,
                                             'dataType' => 'DateTime',
-                                            'readonly' => NULL,
-                                            'required' => NULL,
+                                            'readonly' => false,
+                                            'required' => false,
+                                            'description' => '',
                                         ),
                                     'objects' =>
                                         array (
@@ -1276,32 +1278,21 @@ With multiple lines.",
                                                             'format' => '{length: min: foo}, {not blank}',
                                                             'required' => true,
                                                             'dataType' => 'string',
-                                                            'readonly' => NULL,
+                                                            'readonly' => false,
                                                         ),
                                                     'b' =>
                                                         array (
                                                             'default' => NULL,
-                                                            'actualType' => 'datetime',
+                                                            'actualType' => DataTypes::MODEL,
                                                             'subType' => NULL,
-                                                            'dataType' => 'DateTime',
-                                                            'readonly' => NULL,
-                                                            'required' => NULL,
+                                                            'dataType' => 'object (DateTime)',
+                                                            'readonly' => null,
+                                                            'required' => null,
                                                         ),
                                                 ),
-                                            'readonly' => NULL,
-                                            'required' => NULL,
-                                        ),
-                                    'number' =>
-                                        array (
-                                            'dataType' => 'DateTime',
-                                            'actualType' => 'datetime',
-                                            'subType' => NULL,
-                                            'required' => false,
-                                            'default' => NULL,
-                                            'description' => '',
                                             'readonly' => false,
-                                            'sinceVersion' => NULL,
-                                            'untilVersion' => NULL,
+                                            'required' => false,
+                                            'description' => '',
                                         ),
                                     'related' =>
                                         array (
@@ -1312,8 +1303,6 @@ With multiple lines.",
                                             'default' => NULL,
                                             'description' => '',
                                             'readonly' => false,
-                                            'sinceVersion' => NULL,
-                                            'untilVersion' => NULL,
                                             'children' =>
                                                 array (
                                                     'a' =>
@@ -1324,16 +1313,18 @@ With multiple lines.",
                                                             'format' => '{length: min: foo}, {not blank}',
                                                             'required' => true,
                                                             'dataType' => 'string',
-                                                            'readonly' => NULL,
+                                                            'readonly' => false,
+                                                            'description' => '',
                                                         ),
                                                     'b' =>
                                                         array (
                                                             'default' => NULL,
-                                                            'actualType' => 'datetime',
+                                                            'actualType' => DataTypes::MODEL,
                                                             'subType' => NULL,
-                                                            'dataType' => 'DateTime',
-                                                            'readonly' => NULL,
-                                                            'required' => NULL,
+                                                            'dataType' => 'object (DateTime)',
+                                                            'readonly' => false,
+                                                            'required' => false,
+                                                            'description' => '',
                                                         ),
                                                 ),
                                         ),
@@ -1411,8 +1402,9 @@ With multiple lines.",
                                             'actualType' => 'datetime',
                                             'subType' => NULL,
                                             'dataType' => 'DateTime',
-                                            'readonly' => NULL,
-                                            'required' => NULL,
+                                            'readonly' => false,
+                                            'required' => false,
+                                            'description' => '',
                                         ),
                                     'objects' =>
                                         array (
@@ -1430,32 +1422,21 @@ With multiple lines.",
                                                             'format' => '{length: min: foo}, {not blank}',
                                                             'required' => true,
                                                             'dataType' => 'string',
-                                                            'readonly' => NULL,
+                                                            'readonly' => false,
                                                         ),
                                                     'b' =>
                                                         array (
-                                                            'default' => NULL,
-                                                            'actualType' => 'datetime',
-                                                            'subType' => NULL,
-                                                            'dataType' => 'DateTime',
-                                                            'readonly' => NULL,
-                                                            'required' => NULL,
+                                                            'default' => null,
+                                                            'actualType' => 'model',
+                                                            'subType' => null,
+                                                            'dataType' => 'object (DateTime)',
+                                                            'readonly' => null,
+                                                            'required' => null,
                                                         ),
                                                 ),
-                                            'readonly' => NULL,
-                                            'required' => NULL,
-                                        ),
-                                    'number' =>
-                                        array (
-                                            'dataType' => 'DateTime',
-                                            'actualType' => 'datetime',
-                                            'subType' => NULL,
-                                            'required' => false,
-                                            'default' => NULL,
-                                            'description' => '',
                                             'readonly' => false,
-                                            'sinceVersion' => NULL,
-                                            'untilVersion' => NULL,
+                                            'required' => false,
+                                            'description' => '',
                                         ),
                                     'related' =>
                                         array (
@@ -1466,8 +1447,6 @@ With multiple lines.",
                                             'default' => NULL,
                                             'description' => '',
                                             'readonly' => false,
-                                            'sinceVersion' => NULL,
-                                            'untilVersion' => NULL,
                                             'children' =>
                                                 array (
                                                     'a' =>
@@ -1478,16 +1457,18 @@ With multiple lines.",
                                                             'format' => '{length: min: foo}, {not blank}',
                                                             'required' => true,
                                                             'dataType' => 'string',
-                                                            'readonly' => NULL,
+                                                            'readonly' => false,
+                                                            'description' => '',
                                                         ),
                                                     'b' =>
                                                         array (
                                                             'default' => NULL,
-                                                            'actualType' => 'datetime',
+                                                            'actualType' => 'model',
                                                             'subType' => NULL,
-                                                            'dataType' => 'DateTime',
-                                                            'readonly' => NULL,
-                                                            'required' => NULL,
+                                                            'dataType' => 'object (DateTime)',
+                                                            'readonly' => false,
+                                                            'required' => false,
+                                                            'description' => '',
                                                         ),
                                                 ),
                                         ),

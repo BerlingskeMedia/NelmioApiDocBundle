@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="NelmioApiDocBundle vendor for Berlingske Media" default="build">
+
+    <property environment="prod"/>
+    <property name="env.SYMFONY_ENV" value="prod"/>
+    <property name="dir.build" value="${basedir}/build"/>
+
+    <target name="build"
+            depends="vendors, remove-composer-lock">
+    </target>
+
+    <target name="test"
+            depends="vendors, qc, remove-composer-lock">
+    </target>
+
+    <target name="remove-composer-lock">
+        <delete file="composer.lock"/>
+    </target>
+
+    <target name="vendors" description="Add Vendors">
+        <delete file="composer.lock"/>
+        <exec executable="composer" failonerror="true">
+            <env key="SYMFONY_ENV" value="prod"/>
+            <arg value="update"/>
+            <arg value="--no-interaction"/>
+            <arg value="--optimize-autoloader"/>
+        </exec>
+    </target>
+
+    <target name="qc" depends="phpunit,sensio-security,deprecation-detector"/>
+
+    <target name="deprecation-detector">
+        <exec executable="php" failonerror="true">
+            <arg value="vendor/bin/deprecation-detector"/>
+            <arg value="check"/>
+            <arg value="--fail"/>
+            <arg value="--no-cache"/>
+            <arg value="src/"/>
+            <arg value="vendor/"/>
+        </exec>
+    </target>
+
+    <target name="phpunit">
+        <exec executable="php" failonerror="true">
+            <arg value="-dopcache.enable_cli=1"/>
+            <arg value="vendor/bin/phpunit"/>
+            <arg value="-c"/>
+            <arg value="phpunit.xml.dist"/>
+        </exec>
+    </target>
+
+    <target name="sensio-security" description="Security Advisories Checker">
+        <exec executable="curl" failonerror="true">
+            <arg line='-H "Accept: text/plain" https://security.sensiolabs.org/check_lock -F lock=@composer.lock'/>
+        </exec>
+    </target>
+
+</project>

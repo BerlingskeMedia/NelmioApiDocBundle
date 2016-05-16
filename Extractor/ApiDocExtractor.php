@@ -17,6 +17,7 @@ use Nelmio\ApiDocBundle\Annotation\ApiDoc;
 use Nelmio\ApiDocBundle\DataTypes;
 use Nelmio\ApiDocBundle\Parser\ParserInterface;
 use Nelmio\ApiDocBundle\Parser\PostParserInterface;
+use ReflectionMethod;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -132,7 +133,7 @@ class ApiDocExtractor
                             $resources[] = $resource;
                         } else {
                             // remove format from routes used for resource grouping
-                            $resources[] = str_replace('.{_format}', '', $route->getPattern());
+                            $resources[] = str_replace('.{_format}', '', $route->getPath());
                         }
                     }
 
@@ -144,7 +145,7 @@ class ApiDocExtractor
         rsort($resources);
         foreach ($array as $index => $element) {
             $hasResource = false;
-            $pattern     = $element['annotation']->getRoute()->getPattern();
+            $pattern     = $element['annotation']->getRoute()->getPath();
 
             foreach ($resources as $resource) {
                 if (0 === strpos($pattern, $resource) || $resource === $element['annotation']->getResource()) {
@@ -163,7 +164,7 @@ class ApiDocExtractor
         $methodOrder = array('GET', 'POST', 'PUT', 'DELETE');
         usort($array, function ($a, $b) use ($methodOrder) {
                 if ($a['resource'] === $b['resource']) {
-                    if ($a['annotation']->getRoute()->getPattern() === $b['annotation']->getRoute()->getPattern()) {
+                    if ($a['annotation']->getRoute()->getPath() === $b['annotation']->getRoute()->getPath()) {
                         $methodA = array_search($a['annotation']->getRoute()->getRequirement('_method'), $methodOrder);
                         $methodB = array_search($b['annotation']->getRoute()->getRequirement('_method'), $methodOrder);
 
@@ -178,8 +179,8 @@ class ApiDocExtractor
                     }
 
                     return strcmp(
-                        $a['annotation']->getRoute()->getPattern(),
-                        $b['annotation']->getRoute()->getPattern()
+                        $a['annotation']->getRoute()->getPath(),
+                        $b['annotation']->getRoute()->getPath()
                     );
                 }
 
@@ -197,17 +198,34 @@ class ApiDocExtractor
      */
     public function getReflectionMethod($controller)
     {
+        if (false === strpos($controller, '::') && 2 === substr_count($controller, ':')) {
+            $controller = $this->controllerNameParser->parse($controller);
+        }
+
         if (preg_match('#(.+)::([\w]+)#', $controller, $matches)) {
             $class = $matches[1];
             $method = $matches[2];
-        } elseif (preg_match('#(.+):([\w]+)#', $controller, $matches)) {
-            $controller = $matches[1];
-            $method = $matches[2];
+        } else {
+            if (preg_match('#(.+):([\w]+)#', $controller, $matches)) {
+                $controller = $matches[1];
+                $method = $matches[2];
+            }
+
             if ($this->container->has($controller)) {
-                $this->container->enterScope('request');
-                $this->container->set('request', new Request(), 'request');
+                // BC SF < 3.0
+                if (method_exists($this->container, 'enterScope')) {
+                    $this->container->enterScope('request');
+                    $this->container->set('request', new Request(), 'request');
+                }
                 $class = ClassUtils::getRealClass(get_class($this->container->get($controller)));
-                $this->container->leaveScope('request');
+                // BC SF < 3.0
+                if (method_exists($this->container, 'enterScope')) {
+                    $this->container->leaveScope('request');
+                }
+
+                if (!isset($method) && method_exists($class, '__invoke')) {
+                    $method = '__invoke';
+                }
             }
         }
 
@@ -387,6 +405,7 @@ class ApiDocExtractor
         $defaults = array(
             'class'   => '',
             'groups'  => array(),
+            'options'  => array(),
         );
 
         // normalize strings
@@ -524,7 +543,7 @@ class ApiDocExtractor
     {
         foreach ($array as $name => $info) {
 
-            if (empty($info['dataType'])) {
+            if (empty($info['dataType']) && isset($info['subType'])) {
                 $array[$name]['dataType'] = $this->generateHumanReadableType($info['actualType'], $info['subType']);
             }
 

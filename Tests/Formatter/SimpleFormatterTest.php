@@ -355,9 +355,9 @@ class SimpleFormatterTest extends WebTestCase
                     'parameters' =>
                     array(
                         'dependency_type' => array(
-                            'dataType' => 'object (dependency_type)',
+                            'dataType' => 'object (DependencyType)',
                             'actualType' => DataTypes::MODEL,
-                            'subType' => 'dependency_type',
+                            'subType' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Form\DependencyType',
                             'default' => null,
                             'required' => true,
                             'readonly' => false,
@@ -687,9 +687,9 @@ With multiple lines.',
                     'response' =>
                     array(
                         'dependency_type' => array(
-                            'dataType' => 'object (dependency_type)',
+                            'dataType' => 'object (DependencyType)',
                             'actualType' => DataTypes::MODEL,
-                            'subType' => 'dependency_type',
+                            'subType' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Form\DependencyType',
                             'default' => null,
                             'required' => true,
                             'readonly' => false,
@@ -1017,7 +1017,7 @@ With multiple lines.',
                 array(
                     'method' => 'ANY',
                     'uri' => '/secure-route',
-                    'https' => true,
+                    'https' => false,
                     'authentication' => false,
                     'authenticationRoles' => array(),
                     'deprecated' => false,
@@ -1154,30 +1154,20 @@ With multiple lines.',
                     'response' => array (
                         'bar' => array(
                             'dataType' => 'DateTime',
-                            'actualType' => DataTypes::DATETIME,
-                            'subType' => null,
-                            'default' => null,
-                            'required' => null,
-                            'readonly' => null
-                        ),
-                        'number' => array(
-                            'dataType' => 'DateTime',
-                            'actualType' => DataTypes::DATETIME,
+                            'actualType' => 'datetime',
                             'subType' => null,
                             'default' => null,
                             'required' => false,
-                            'description' => '',
                             'readonly' => false,
-                            'sinceVersion' => null,
-                            'untilVersion' => null
+                            'description' => '',
                         ),
                         'objects' => array(
                             'dataType' => 'array of objects (Test)',
                             'actualType' => DataTypes::COLLECTION,
                             'subType' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Model\Test',
                             'default' => null,
-                            'readonly' => null,
-                            'required' => null,
+                            'readonly' => false,
+                            'required' => false,
                             'children' => array(
                                 'a' => array(
                                     'dataType' => 'string',
@@ -1186,25 +1176,24 @@ With multiple lines.',
                                     'default' => 'nelmio',
                                     'format' => '{length: min: foo}, {not blank}',
                                     'required' => true,
-                                    'readonly' => null
+                                    'readonly' => null,
                                 ),
                                 'b' => array(
-                                    'dataType' => 'DateTime',
-                                    'actualType' => DataTypes::DATETIME,
+                                    'dataType' => 'object (DateTime)',
+                                    'actualType' => DataTypes::MODEL,
                                     'subType' => null,
                                     'default' => null,
                                     'required' => null,
-                                    'readonly' => null
-                                )
-                            )
+                                    'readonly' => null,
+                                ),
+                            ),
+                            'description' => '',
                         ),
                         'related' => array(
                             'dataType' => 'object (Test)',
                             'readonly' => false,
                             'required' => false,
                             'description' => '',
-                            'sinceVersion' => null,
-                            'untilVersion' => null,
                             'actualType' => DataTypes::MODEL,
                             'subType' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Model\Test',
                             'default' => null,
@@ -1217,14 +1206,16 @@ With multiple lines.',
                                     'actualType' => DataTypes::STRING,
                                     'subType' => null,
                                     'default' => 'nelmio',
+                                    'description' => '',
                                 ),
                                 'b' => array(
-                                    'dataType' => 'DateTime',
-                                    'required' => null,
-                                    'readonly' => null,
-                                    'actualType' => DataTypes::DATETIME,
+                                    'dataType' => 'object (DateTime)',
+                                    'required' => false,
+                                    'readonly' => false,
+                                    'actualType' => DataTypes::MODEL,
                                     'subType' => null,
                                     'default' => null,
+                                    'description' => '',
                                 )
                             )
                         )
@@ -1290,30 +1281,20 @@ With multiple lines.',
                     'response' => array (
                         'bar' => array(
                             'dataType' => 'DateTime',
-                            'actualType' => DataTypes::DATETIME,
-                            'subType' => null,
-                            'default' => null,
-                            'required' => null,
-                            'readonly' => null
-                        ),
-                        'number' => array(
-                            'dataType' => 'DateTime',
-                            'actualType' => DataTypes::DATETIME,
+                            'actualType' => 'datetime',
                             'subType' => null,
                             'default' => null,
                             'required' => false,
-                            'description' => '',
                             'readonly' => false,
-                            'sinceVersion' => null,
-                            'untilVersion' => null
+                            'description' => '',
                         ),
                         'objects' => array(
                             'dataType' => 'array of objects (Test)',
                             'actualType' => DataTypes::COLLECTION,
                             'subType' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Model\Test',
                             'default' => null,
-                            'readonly' => null,
-                            'required' => null,
+                            'readonly' => false,
+                            'required' => false,
                             'children' => array(
                                 'a' => array(
                                     'dataType' => 'string',
@@ -1325,22 +1306,21 @@ With multiple lines.',
                                     'readonly' => null
                                 ),
                                 'b' => array(
-                                    'dataType' => 'DateTime',
-                                    'actualType' => DataTypes::DATETIME,
+                                    'dataType' => 'object (DateTime)',
+                                    'required' => null,
+                                    'readonly' => null,
+                                    'actualType' => 'model',
                                     'subType' => null,
                                     'default' => null,
-                                    'required' => null,
-                                    'readonly' => null
                                 )
-                            )
+                            ),
+                            'description' => '',
                         ),
                         'related' => array(
                             'dataType' => 'object (Test)',
                             'readonly' => false,
                             'required' => false,
                             'description' => '',
-                            'sinceVersion' => null,
-                            'untilVersion' => null,
                             'actualType' => DataTypes::MODEL,
                             'subType' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Model\Test',
                             'default' => null,
@@ -1353,14 +1333,16 @@ With multiple lines.',
                                     'actualType' => DataTypes::STRING,
                                     'subType' => null,
                                     'default' => 'nelmio',
+                                    'description' => '',
                                 ),
                                 'b' => array(
-                                    'dataType' => 'DateTime',
-                                    'required' => null,
-                                    'readonly' => null,
-                                    'actualType' => DataTypes::DATETIME,
+                                    'dataType' => 'object (DateTime)',
+                                    'required' => false,
+                                    'readonly' => false,
+                                    'actualType' => 'model',
                                     'subType' => null,
                                     'default' => null,
+                                    'description' => '',
                                 )
                             )
                         )

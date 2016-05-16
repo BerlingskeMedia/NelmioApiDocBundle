@@ -11,6 +11,7 @@ class MultipleTest
 
     /**
      * @Assert\Type("DateTime")
+     * @JMS\Type("DateTime")
      */
     public $bar;
 
@@ -21,14 +22,15 @@ class MultipleTest
     public $baz;
 
     /**
+     * @Assert\Type("Nelmio\ApiDocBundle\Tests\Fixtures\Model\Test")
      * @JMS\Type("Nelmio\ApiDocBundle\Tests\Fixtures\Model\Test")
      */
     public $related;
 
     /**
-     * @Assert\Type(type="array")
+     * @JMS\Type("array<Nelmio\ApiDocBundle\Tests\Fixtures\Model\Test>")
      * @Assert\All({
-     *     @Assert\Type(type="Test")
+     *     @Assert\Type("Nelmio\ApiDocBundle\Tests\Fixtures\Model\Test")
      * })
      */
     public $objects;

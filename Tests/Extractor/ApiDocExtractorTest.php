@@ -88,9 +88,6 @@ class ApiDocExtractorTest extends WebTestCase
         $this->assertTrue($a4->isResource());
         $this->assertEquals('TestResource', $a4->getResource());
 
-        $a3 = $data['16']['annotation'];
-        $this->assertTrue($a3->getHttps());
-
     }
 
     public function testGet()

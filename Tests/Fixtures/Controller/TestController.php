@@ -17,6 +17,7 @@ use Nelmio\ApiDocBundle\Annotation\ApiDoc;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\Constraints\Email;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
+use Nelmio\ApiDocBundle\Tests\Fixtures\DependencyTypePath;
 
 class TestController
 {
@@ -100,7 +101,7 @@ class TestController
     /**
      * @ApiDoc(
      *  description="create another test",
-     *  input="dependency_type"
+     *  input=DependencyTypePath::TYPE
      * )
      */
     public function anotherPostAction()
@@ -152,7 +153,7 @@ class TestController
     /**
      * @ApiDoc(
      *  description="Testing return",
-     *  output="dependency_type"
+     *  output=DependencyTypePath::TYPE
      * )
      */
     public function jmsReturnTestAction()

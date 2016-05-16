@@ -13,25 +13,13 @@ namespace Nelmio\ApiDocBundle\Tests\Fixtures\Form;
 
 use Nelmio\ApiDocBundle\Util\LegacyFormHelper;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\ChoiceList\SimpleChoiceList;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
-class TestType extends AbstractType
+class EntityType extends AbstractType
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function buildForm(FormBuilderInterface $builder, array $options)
-    {
-        $builder
-            ->add('a', null, array('description' => 'A nice description'))
-            ->add('b')
-            ->add($builder->create('c', LegacyFormHelper::getType('Symfony\Component\Form\Extension\Core\Type\CheckboxType')))
-            ->add('d', LegacyFormHelper::getType('Symfony\Component\Form\Extension\Core\Type\TextType'),array( 'data' => 'DefaultTest'))
-        ;
-    }
-
     /**
      * {@inheritdoc}
      *
@@ -48,10 +36,15 @@ class TestType extends AbstractType
     public function configureOptions(OptionsResolver $resolver)
     {
         $resolver->setDefaults(array(
-            'data_class' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Model\Test',
+            'data_class' => 'Nelmio\ApiDocBundle\Tests\Fixtures\Model\EntityTest',
         ));
 
         return;
+    }
+
+    public function getParent()
+    {
+        return LegacyFormHelper::getType('Symfony\Component\Form\Extension\Core\Type\ChoiceType');
     }
 
     /**
@@ -68,6 +61,6 @@ class TestType extends AbstractType
      */
     public function getBlockPrefix()
     {
-        return '';
+        return 'entity';
     }
 }
