@@ -18,12 +18,21 @@ use Symfony\Component\Routing\Route;
  */
 class ApiDoc
 {
+    const DEFAULT_VIEW = 'default';
+
     /**
      * Requirements are mandatory parameters in a route.
      *
      * @var array
      */
     private $requirements = array();
+
+    /**
+     * Which views is this route used. Defaults to "Default"
+     *
+     * @var array
+     */
+    private $views = array();
 
     /**
      * Filters are optional parameters in the query string.
@@ -38,6 +47,12 @@ class ApiDoc
      * @var array
      */
     private $parameters = array();
+    /**
+     * Headers that client can send.
+     *
+     * @var array
+     */
+    private $headers = array();
 
     /**
      * @var string
@@ -145,6 +160,26 @@ class ApiDoc
      */
     private $responseBodyExample;
 
+    /**
+     * @var string|null
+     */
+    private $resourceDescription = null;
+
+    /**
+     * @var array
+     */
+    private $responseMap = array();
+
+    /**
+     * @var array
+     */
+    private $parsedResponseMap = array();
+
+    /**
+     * @var array
+     */
+    private $tags = array();
+
     public function __construct(array $data)
     {
         $this->resource = !empty($data['resource']) ? $data['resource'] : false;
@@ -155,7 +190,9 @@ class ApiDoc
 
         if (isset($data['input'])) {
             $this->input = $data['input'];
-        } elseif (isset($data['filters'])) {
+        }
+
+        if (isset($data['filters'])) {
             foreach ($data['filters'] as $filter) {
                 if (!isset($filter['name'])) {
                     throw new \InvalidArgumentException('A "filter" element has to contain a "name" attribute');
@@ -181,6 +218,16 @@ class ApiDoc
             }
         }
 
+        if (isset($data['views'])) {
+            if (! is_array($data['views'])) {
+                $data['views'] = array($data['views']);
+            }
+
+            foreach ($data['views'] as $view) {
+                $this->addView($view);
+            }
+        }
+
         if (isset($data['parameters'])) {
             foreach ($data['parameters'] as $parameter) {
                 if (!isset($parameter['name'])) {
@@ -198,6 +245,19 @@ class ApiDoc
                 unset($parameter['name']);
 
                 $this->addParameter($name, $parameter);
+            }
+        }
+
+        if (isset($data['headers'])) {
+            foreach ($data['headers'] as $header) {
+                if (!isset($header['name'])) {
+                    throw new \InvalidArgumentException('A "header" element has to contain a "name" attribute');
+                }
+
+                $name = $header['name'];
+                unset($header['name']);
+
+                $this->addHeader($name, $header);
             }
         }
 
@@ -233,8 +293,33 @@ class ApiDoc
             $this->deprecated = $data['deprecated'];
         }
 
+        if (isset($data['tags'])) {
+            if (is_array($data['tags'])) {
+                foreach ($data['tags'] as $tag => $colorCode) {
+                    if (is_numeric($tag)) {
+                        $this->addTag($colorCode);
+                    } else {
+                        $this->addTag($tag, $colorCode);
+                    }
+                }
+            } else {
+                $this->tags[] = $data['tags'];
+            }
+        }
+
         if (isset($data['https'])) {
             $this->https = $data['https'];
+        }
+
+        if (isset($data['resourceDescription'])) {
+            $this->resourceDescription = $data['resourceDescription'];
+        }
+
+        if (isset($data['responseMap'])) {
+            $this->responseMap = $data['responseMap'];
+            if (isset($this->responseMap[200])) {
+                $this->output = $this->responseMap[200];
+            }
         }
 
         if (isset($data['requestBody'])) {
@@ -292,6 +377,15 @@ class ApiDoc
     public function addStatusCode($statusCode, $description)
     {
         $this->statusCodes[$statusCode] = !is_array($description) ? array($description) : $description;
+    }
+
+    /**
+     * @param string $tag
+     * @param string $colorCode
+     */
+    public function addTag($tag, $colorCode = '#d9534f')
+    {
+        $this->tags[$tag] = $colorCode;
     }
 
     /**
@@ -368,6 +462,22 @@ class ApiDoc
     }
 
     /**
+     * @return array
+     */
+    public function addView($view)
+    {
+        $this->views[] = $view;
+    }
+
+    /**
+     * @return array
+     */
+    public function getViews()
+    {
+        return $this->views;
+    }
+
+    /**
      * @param string $documentation
      */
     public function setDocumentation($documentation)
@@ -417,7 +527,16 @@ class ApiDoc
     }
 
     /**
-     * Sets the responsed data as processed by the parsers - same format as parameters
+     * @param $name
+     * @param array $header
+     */
+    public function addHeader($name, array $header)
+    {
+        $this->headers[$name] = $header;
+    }
+
+    /**
+     * Sets the response data as processed by the parsers - same format as parameters
      *
      * @param array $response
      */
@@ -435,12 +554,19 @@ class ApiDoc
 
         if (method_exists($route, 'getHost')) {
             $this->host = $route->getHost() ? : null;
+
+            //replace route placeholders
+            foreach ($route->getDefaults() as $key => $value) {
+                if (is_string($value)) {
+                    $this->host = str_replace('{' . $key . '}', $value, $this->host);
+                }
+            }
         } else {
             $this->host = null;
         }
 
-        $this->uri    = $route->getPattern();
-        $this->method = $route->getRequirement('_method') ? : 'ANY';
+        $this->uri    = $route->getPath();
+        $this->method = $route->getMethods() ? implode('|', $route->getMethods()) : 'ANY';
     }
 
     /**
@@ -556,6 +682,22 @@ class ApiDoc
     }
 
     /**
+     * @return array
+     */
+    public function getParameters()
+    {
+        return $this->parameters;
+    }
+
+    /**
+     * @return array
+     */
+    public function getHeaders()
+    {
+        return $this->headers;
+    }
+
+    /**
      * @param string $responseBodyExample
      */
     public function setResponseBodyExample($responseBodyExample)
@@ -589,12 +731,21 @@ class ApiDoc
 
     /**
      * @param boolean $deprecated
+     * @return $this
      */
     public function setDeprecated($deprecated)
     {
         $this->deprecated = (bool) $deprecated;
 
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMethod()
+    {
+        return $this->method;
     }
 
     /**
@@ -631,12 +782,24 @@ class ApiDoc
             $data['parameters'] = $parameters;
         }
 
+        if ($headers = $this->headers) {
+            $data['headers'] = $headers;
+        }
+
         if ($requirements = $this->requirements) {
             $data['requirements'] = $requirements;
         }
 
+        if ($views = $this->views) {
+            $data['views'] = $views;
+        }
+
         if ($response = $this->response) {
             $data['response'] = $response;
+        }
+
+        if ($parsedResponseMap = $this->parsedResponseMap) {
+            $data['parsedResponseMap'] = $parsedResponseMap;
         }
 
         if ($statusCodes = $this->statusCodes) {
@@ -649,6 +812,14 @@ class ApiDoc
 
         if ($cache = $this->cache) {
             $data['cache'] = $cache;
+        }
+
+        if ($tags = $this->tags) {
+            $data['tags'] = $tags;
+        }
+
+        if ($resourceDescription = $this->resourceDescription) {
+            $data['resourceDescription'] = $resourceDescription;
         }
 
         if ($requestBodyExample = $this->requestBodyExample) {
@@ -665,6 +836,47 @@ class ApiDoc
         $data['deprecated'] = $this->deprecated;
 
         return $data;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getResourceDescription()
+    {
+        return $this->resourceDescription;
+    }
+
+    /**
+     * @return array
+     */
+    public function getResponseMap()
+    {
+        if (!isset($this->responseMap[200]) && null !== $this->output) {
+            $this->responseMap[200] = $this->output;
+        }
+
+        return $this->responseMap;
+    }
+
+    /**
+     * @return array
+     */
+    public function getParsedResponseMap()
+    {
+        return $this->parsedResponseMap;
+    }
+
+    /**
+     * @param $model
+     * @param $type
+     * @param int $statusCode
+     */
+    public function setResponseForStatusCode($model, $type, $statusCode = 200)
+    {
+        $this->parsedResponseMap[$statusCode] = array('type' => $type, 'model' => $model);
+        if ($statusCode == 200 && $this->response !== $model) {
+            $this->response = $model;
+        }
     }
 
     /**
