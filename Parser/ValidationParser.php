@@ -11,8 +11,10 @@
 
 namespace Nelmio\ApiDocBundle\Parser;
 
+use Nelmio\ApiDocBundle\DataTypes;
 use Symfony\Component\Validator\Exception\ConstraintDefinitionException;
-use Symfony\Component\Validator\MetadataFactoryInterface;
+use Symfony\Component\Validator\Mapping\Factory\MetadataFactoryInterface;
+use Symfony\Component\Validator\MetadataFactoryInterface as LegacyMetadataFactoryInterface;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints\Type;
 
@@ -26,13 +28,31 @@ class ValidationParser implements ParserInterface, PostParserInterface
      */
     protected $factory;
 
+    protected $typeMap = array(
+        'integer'  => DataTypes::INTEGER,
+        'int'      => DataTypes::INTEGER,
+        'scalar'   => DataTypes::STRING,
+        'numeric'  => DataTypes::INTEGER,
+        'boolean'  => DataTypes::BOOLEAN,
+        'string'   => DataTypes::STRING,
+        'float'    => DataTypes::FLOAT,
+        'double'   => DataTypes::FLOAT,
+        'long'     => DataTypes::INTEGER,
+        'object'   => DataTypes::MODEL,
+        'array'    => DataTypes::COLLECTION,
+        'DateTime' => DataTypes::DATETIME,
+    );
+
     /**
      * Requires a validation MetadataFactory.
      *
-     * @param MetadataFactoryInterface $factory
+     * @param MetadataFactoryInterface|LegacyMetadataFactoryInterface $factory
      */
-    public function __construct(MetadataFactoryInterface $factory)
+    public function __construct($factory)
     {
+        if (!($factory instanceof MetadataFactoryInterface) && !($factory instanceof LegacyMetadataFactoryInterface)) {
+            throw new \InvalidArgumentException('Argument 1 of %s constructor must be either an instance of Symfony\Component\Validator\Mapping\Factory\MetadataFactoryInterface or Symfony\Component\Validator\MetadataFactoryInterface.');
+        }
         $this->factory = $factory;
     }
 
@@ -53,7 +73,25 @@ class ValidationParser implements ParserInterface, PostParserInterface
     {
         $className = $input['class'];
 
-        return $this->doParse($className, array());
+        $parsed = $this->doParse($className, array());
+
+        if (isset($input['name']) && !empty($input['name'])) {
+            $output = array();
+            $output[$input['name']] = array(
+                'dataType' => 'object',
+                'actualType' => 'object',
+                'class' => $className,
+                'subType' => null,
+                'required' => null,
+                'description' => null,
+                'readonly' => null,
+                'children' => $parsed
+            );
+
+            return $output;
+        }
+
+        return $parsed;
     }
 
     /**
@@ -69,8 +107,14 @@ class ValidationParser implements ParserInterface, PostParserInterface
         $classdata = $this->factory->getMetadataFor($className);
         $properties = $classdata->getConstrainedProperties();
 
+        $refl = $classdata->getReflectionClass();
+        $defaults = $refl->getDefaultProperties();
+
         foreach ($properties as $property) {
             $vparams = array();
+
+            $vparams['default'] = isset($defaults[$property]) ? $defaults[$property] : null;
+
             $pds = $classdata->getPropertyMetadata($property);
             foreach ($pds as $propdata) {
                 $constraints = $propdata->getConstraints();
@@ -84,7 +128,7 @@ class ValidationParser implements ParserInterface, PostParserInterface
                 $vparams['format'] = join(', ', $vparams['format']);
             }
 
-            foreach (array('dataType', 'readonly', 'required') as $reqprop) {
+            foreach (array('dataType', 'readonly', 'required', 'subType') as $reqprop) {
                 if (!isset($vparams[$reqprop])) {
                     $vparams[$reqprop] = null;
                 }
@@ -95,6 +139,8 @@ class ValidationParser implements ParserInterface, PostParserInterface
                 $visited[] = $vparams['class'];
                 $vparams['children'] = $this->doParse($vparams['class'], $visited);
             }
+
+            $vparams['actualType'] = isset($vparams['actualType']) ? $vparams['actualType'] : DataTypes::STRING;
 
             $params[$property] = $vparams;
         }
@@ -142,6 +188,9 @@ class ValidationParser implements ParserInterface, PostParserInterface
     {
         $class = substr(get_class($constraint), strlen('Symfony\\Component\\Validator\\Constraints\\'));
 
+        $vparams['actualType'] = DataTypes::STRING;
+        $vparams['subType'] = null;
+
         switch ($class) {
             case 'NotBlank':
                 $vparams['format'][] = '{not blank}';
@@ -149,6 +198,9 @@ class ValidationParser implements ParserInterface, PostParserInterface
                 $vparams['required'] = true;
                 break;
             case 'Type':
+                if (isset($this->typeMap[$constraint->type])) {
+                    $vparams['actualType'] = $this->typeMap[$constraint->type];
+                }
                 $vparams['dataType'] = $constraint->type;
                 break;
             case 'Email':
@@ -162,12 +214,15 @@ class ValidationParser implements ParserInterface, PostParserInterface
                 break;
             case 'Date':
                 $vparams['format'][] = '{Date YYYY-MM-DD}';
+                $vparams['actualType'] = DataTypes::DATE;
                 break;
             case 'DateTime':
                 $vparams['format'][] = '{DateTime YYYY-MM-DD HH:MM:SS}';
+                $vparams['actualType'] = DataTypes::DATETIME;
                 break;
             case 'Time':
                 $vparams['format'][] = '{Time HH:MM:SS}';
+                $vparams['actualType'] = DataTypes::TIME;
                 break;
             case 'Length':
                 $messages = array();
@@ -183,6 +238,8 @@ class ValidationParser implements ParserInterface, PostParserInterface
                 $choices = $this->getChoices($constraint, $className);
                 $format = '[' . join('|', $choices) . ']';
                 if ($constraint->multiple) {
+                    $vparams['actualType'] = DataTypes::COLLECTION;
+                    $vparams['subType'] = DataTypes::ENUM;
                     $messages = array();
                     if (isset($constraint->min)) {
                         $messages[] = "min: {$constraint->min} ";
@@ -192,6 +249,7 @@ class ValidationParser implements ParserInterface, PostParserInterface
                     }
                     $vparams['format'][] = '{' . join ('', $messages) . 'choice of ' . $format . '}';
                 } else {
+                    $vparams['actualType'] = DataTypes::ENUM;
                     $vparams['format'][] = $format;
                 }
                 break;
@@ -215,8 +273,10 @@ class ValidationParser implements ParserInterface, PostParserInterface
                             }
                         }
 
-                        $vparams['dataType'] = sprintf("array of objects (%s)", end($exp));
-                        $vparams['class'] = $nestedType;
+                        $vparams['dataType']   = sprintf("array of objects (%s)", end($exp));
+                        $vparams['actualType'] = DataTypes::COLLECTION;
+                        $vparams['subType']    = $nestedType;
+                        $vparams['class']      = $nestedType;
 
                         if (!in_array($nestedType, $visited)) {
                             $visited[] = $nestedType;
@@ -233,7 +293,7 @@ class ValidationParser implements ParserInterface, PostParserInterface
     /**
      * Return Choice constraint choices.
      *
-     * @param Constraint $constraint
+     * @param  Constraint                                                           $constraint
      * @param $className
      * @return array
      * @throws \Symfony\Component\Validator\Exception\ConstraintDefinitionException

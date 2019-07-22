@@ -24,13 +24,18 @@ class LoadExtractorParsersPass implements CompilerPassInterface
         }
 
         // validation may not be installed/enabled, if it is, load that config as well
-        if ($container->hasDefinition('validator.mapping.class_metadata_factory')) {
+        if ($container->has('validator.mapping.class_metadata_factory')) {
             $loader->load('services.validation.xml');
         }
 
         // JMS may or may not be installed, if it is, load that config as well
         if ($container->hasDefinition('jms_serializer.serializer')) {
             $loader->load('services.jms.xml');
+        }
+
+        // DunglasJsonLdApiBundle may or may not be installed, if it is, load that config as well
+        if ($container->hasDefinition('api.resource_collection')) {
+            $loader->load('services.dunglas_api.xml');
         }
     }
 }

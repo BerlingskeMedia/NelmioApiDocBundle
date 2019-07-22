@@ -3,23 +3,17 @@ NelmioApiDocBundle
 
 [![Build
 Status](https://secure.travis-ci.org/nelmio/NelmioApiDocBundle.png?branch=master)](http://travis-ci.org/nelmio/NelmioApiDocBundle)
+[![Total Downloads](https://poser.pugx.org/nelmio/api-doc-bundle/downloads)](https://packagist.org/packages/nelmio/api-doc-bundle)
+[![Latest Stable
+Version](https://poser.pugx.org/nelmio/api-doc-bundle/v/stable)](https://packagist.org/packages/nelmio/api-doc-bundle)
 
 The **NelmioApiDocBundle** bundle allows you to generate a decent documentation
 for your APIs.
 
-**Important:** This bundle is developed in sync with [symfony's
-repository](https://github.com/symfony/symfony).
-For Symfony `2.0.x`, you need to use the `1.*` version of the bundle.
-
-
 Documentation
 -------------
 
-For documentation, see:
-
-    Resources/doc/
-
-[Read the documentation](https://github.com/nelmio/NelmioApiDocBundle/blob/master/Resources/doc/index.md)
+[Read the documentation on symfony.com](https://symfony.com/doc/current/bundles/NelmioApiDocBundle/index.html)
 
 
 Contributing
