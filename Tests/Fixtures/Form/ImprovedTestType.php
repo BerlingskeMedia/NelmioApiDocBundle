@@ -42,7 +42,8 @@ class ImprovedTestType extends AbstractType
             ->add('c2', $choiceType, array_merge(
                 array(
                     'choices' => array(
-                        'm' => 'Male', 'f' => 'Female'
+                        'm' => 'Male',
+                        'f' => 'Female'
                     ),
                     'multiple' => true
                 ),
