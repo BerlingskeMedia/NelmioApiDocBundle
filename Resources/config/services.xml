@@ -20,6 +20,7 @@
     </parameters>
 
     <services>
+        <defaults autowire="false" autoconfigure="false"/>
         <service id="nelmio_api_doc.doc_comment_extractor" class="%nelmio_api_doc.doc_comment_extractor.class%" />
 
         <service id="nelmio_api_doc.controller_name_parser" class="Symfony\Bundle\FrameworkBundle\Controller\ControllerNameParser" public="false">
@@ -73,6 +74,10 @@
         <!-- priority=1 means it comes before the validation parser, which can often add better type information -->
         <service id="nelmio_api_doc.parser.json_serializable_parser" class="%nelmio_api_doc.parser.json_serializable_parser.class%">
             <tag name="nelmio_api_doc.extractor.parser" priority="1" />
+        </service>
+
+        <service id="nelmio_api_doc.command.dump" class="Nelmio\ApiDocBundle\Command\DumpCommand">
+            <tag name="console.command" command="api:doc:dump"/>
         </service>
     </services>
 

@@ -152,7 +152,7 @@ class TestController
      * @ApiDoc()
      * @QueryParam(name="mail", requirements=@Assert\Email, description="Email of someone.")
      */
-    public function zActionWithConstraintAsRequirements()
+    public function zActionWithConstraintAsRequirementsAction()
     {
     }
 
@@ -419,7 +419,7 @@ class TestController
      * @ApiDoc()
      * @QueryParam(name="param1", description="Param1 description.")
      */
-    public function zActionWithRequirementParamNotSet()
+    public function zActionWithRequirementParamNotSetAction()
     {
     }
 }

@@ -92,7 +92,7 @@ class FosRestHandlerTest extends WebTestCase
     {
         $container  = $this->getContainer();
         $extractor  = $container->get('nelmio_api_doc.extractor.api_doc_extractor');
-        $annotation = $extractor->get('Nelmio\ApiDocBundle\Tests\Fixtures\Controller\TestController::zActionWithConstraintAsRequirements', 'test_route_21');
+        $annotation = $extractor->get('Nelmio\ApiDocBundle\Tests\Fixtures\Controller\TestController::zActionWithConstraintAsRequirementsAction', 'test_route_21');
 
         $this->assertNotNull($annotation);
 
@@ -208,7 +208,7 @@ class FosRestHandlerTest extends WebTestCase
     {
         $container  = $this->getContainer();
         $extractor  = $container->get('nelmio_api_doc.extractor.api_doc_extractor');
-        $annotation = $extractor->get('Nelmio\ApiDocBundle\Tests\Fixtures\Controller\TestController::zActionWithRequirementParamNotSet', 'test_route_31');
+        $annotation = $extractor->get('Nelmio\ApiDocBundle\Tests\Fixtures\Controller\TestController::zActionWithRequirementParamNotSetAction', 'test_route_31');
 
         $this->assertNotNull($annotation);
 

@@ -1,16 +1,8 @@
 <?php
-
-/*
- * This file is part of the NelmioApiDocBundle.
- *
- * (c) Nelmio <hello@nelm.io>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 namespace NelmioApiDocBundle\Tests\Parser;
 
+use JMS\Serializer\Naming\PropertyNamingStrategyInterface;
+use Metadata\MetadataFactoryInterface;
 use Nelmio\ApiDocBundle\DataTypes;
 use Nelmio\ApiDocBundle\Tests\Fixtures\Model\JmsNested;
 use Nelmio\ApiDocBundle\Parser\JmsMetadataParser;
@@ -25,7 +17,7 @@ class JmsMetadataParserTest extends \PHPUnit_Framework_TestCase
      */
     public function testParserWithNestedType($type)
     {
-        $metadataFactory = $this->getMock('Metadata\MetadataFactoryInterface');
+        $metadataFactory = $this->createMock(MetadataFactoryInterface::class);
         $docCommentExtractor = $this->getMockBuilder('Nelmio\ApiDocBundle\Util\DocCommentExtractor')
             ->disableOriginalConstructor()
             ->getMock();
@@ -56,7 +48,7 @@ class JmsMetadataParserTest extends \PHPUnit_Framework_TestCase
         $metadata->addPropertyMetadata($propertyMetadataBar);
         $metadata->addPropertyMetadata($propertyMetadataBaz);
 
-        $propertyNamingStrategy = $this->getMock('JMS\Serializer\Naming\PropertyNamingStrategyInterface');
+        $propertyNamingStrategy = $this->createMock(PropertyNamingStrategyInterface::class);
 
         $propertyNamingStrategy
             ->expects($this->at(0))
@@ -131,7 +123,7 @@ class JmsMetadataParserTest extends \PHPUnit_Framework_TestCase
 
     public function testParserWithGroups()
     {
-        $metadataFactory     = $this->getMock('Metadata\MetadataFactoryInterface');
+        $metadataFactory     = $this->createMock(MetadataFactoryInterface::class);
         $docCommentExtractor = $this->getMockBuilder('Nelmio\ApiDocBundle\Util\DocCommentExtractor')
             ->disableOriginalConstructor()
             ->getMock();
@@ -330,96 +322,9 @@ class JmsMetadataParserTest extends \PHPUnit_Framework_TestCase
         );
     }
 
-    public function testNestedGroups()
-    {
-        $metadataFactory     = $this->getMock('Metadata\MetadataFactoryInterface');
-        $docCommentExtractor = $this->getMockBuilder('Nelmio\ApiDocBundle\Util\DocCommentExtractor')
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $input = 'Nelmio\ApiDocBundle\Tests\Fixtures\Model\JmsNested';
-        $nestedInput = 'Nelmio\ApiDocBundle\Tests\Fixtures\Model\JmsTest';
-
-        $nestedPropertyMetadataHidden = new PropertyMetadata($nestedInput, 'hidden');
-        $nestedPropertyMetadataHidden->type = array('name' => 'string');
-        $nestedPropertyMetadataHidden->groups = array('hidden');
-
-        $nestedPropertyMetadataFoo = new PropertyMetadata($nestedInput, 'foo');
-        $nestedPropertyMetadataFoo->type = array('name' => 'string');
-
-        $nestedMetadata = new ClassMetadata($nestedInput);
-        $nestedMetadata->addPropertyMetadata($nestedPropertyMetadataHidden);
-        $nestedMetadata->addPropertyMetadata($nestedPropertyMetadataFoo);
-
-        $propertyMetadataFoo       = new PropertyMetadata($input, 'foo');
-        $propertyMetadataFoo->type = array('name' => 'string');
-
-        $propertyMetadataBar         = new PropertyMetadata($input, 'bar');
-        $propertyMetadataBar->type   = array('name' => 'string');
-        $propertyMetadataBar->groups = array('Default');
-
-        $propertyMetadataParent         = new PropertyMetadata($input, 'parent');
-        $propertyMetadataParent->type   = array('name' => $nestedInput);
-        $propertyMetadataParent->groups = array('hidden');
-
-        $metadata = new ClassMetadata($input);
-        $metadata->addPropertyMetadata($propertyMetadataFoo);
-        $metadata->addPropertyMetadata($propertyMetadataBar);
-        $metadata->addPropertyMetadata($propertyMetadataParent);
-
-        $metadataFactory->expects($this->any())
-            ->method('getMetadataForClass')
-            ->will($this->returnValueMap(array(
-                array($input, $metadata),
-                array($nestedInput, $nestedMetadata)
-            )));
-
-        $propertyNamingStrategy = new CamelCaseNamingStrategy();
-        $jmsMetadataParser = new JmsMetadataParser($metadataFactory, $propertyNamingStrategy, $docCommentExtractor);
-
-        // No group specified.
-        $output = $jmsMetadataParser->parse(
-            array(
-                'class'   => $input,
-                'groups'  => array('hidden'),
-            )
-        );
-
-        $this->assertEquals(
-            array(
-                'parent' => array(
-                    'dataType' => 'object (JmsTest)',
-                    'actualType' => DataTypes::MODEL,
-                    'subType' => $nestedInput,
-                    'default' => null,
-                    'required' => false,
-                    'description' => null,
-                    'readonly' => false,
-                    'sinceVersion' => null,
-                    'untilVersion' => null,
-                    'class' => $nestedInput,
-                    'children' => array(
-                        'hidden' => array(
-                            'dataType' => 'string',
-                            'actualType' => 'string',
-                            'subType' => null,
-                            'required' => false,
-                            'default' => null,
-                            'description' => null,
-                            'readonly' => false,
-                            'sinceVersion' => null,
-                            'untilVersion' => null
-                        )
-                    )
-                )
-            ),
-            $output
-        );
-    }
-
     public function testParserWithVersion()
     {
-        $metadataFactory     = $this->getMock('Metadata\MetadataFactoryInterface');
+        $metadataFactory     = $this->createMock(MetadataFactoryInterface::class);
         $docCommentExtractor = $this->getMockBuilder('Nelmio\ApiDocBundle\Util\DocCommentExtractor')
             ->disableOriginalConstructor()
             ->getMock();
@@ -501,7 +406,7 @@ class JmsMetadataParserTest extends \PHPUnit_Framework_TestCase
 
     public function testParserWithInline()
     {
-        $metadataFactory     = $this->getMock('Metadata\MetadataFactoryInterface');
+        $metadataFactory     = $this->createMock(MetadataFactoryInterface::class);
         $docCommentExtractor = $this->getMockBuilder('Nelmio\ApiDocBundle\Util\DocCommentExtractor')
             ->disableOriginalConstructor()
             ->getMock();
@@ -576,6 +481,115 @@ class JmsMetadataParserTest extends \PHPUnit_Framework_TestCase
                     'readonly' => false,
                     'sinceVersion' => null,
                     'untilVersion' => null,
+                ),
+            ),
+            $output
+        );
+    }
+
+    public function testParserWithDiscriminator()
+    {
+        $metadataFactory     = $this->createMock(MetadataFactoryInterface::class);
+        $docCommentExtractor = $this->getMockBuilder('Nelmio\ApiDocBundle\Util\DocCommentExtractor')
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $inputMainClass = 'Nelmio\ApiDocBundle\Tests\Fixtures\Model\JmsWithDiscriminators';
+        $inputDiscriminatorClass = 'Nelmio\ApiDocBundle\Tests\Fixtures\Model\DiscriminatorClass';
+        $discriminatorFieldName = 'type';
+
+        $propertyMetadataFoo       = new PropertyMetadata($inputMainClass, 'foo');
+        $propertyMetadataFoo->type = array(
+            'name' => 'string',
+        );
+
+        $propertyMetadataBar        = new PropertyMetadata($inputDiscriminatorClass, 'bar');
+        $propertyMetadataBar->type  = array(
+            'name' => 'string',
+        );
+
+        $metadataMainClass = new ClassMetadata($inputMainClass);
+        $metadataMainClass->addPropertyMetadata($propertyMetadataFoo);
+        $metadataMainClass->setDiscriminator($discriminatorFieldName,
+            array(
+                'TYPE_1' => $inputDiscriminatorClass,
+            )
+        );
+
+        $metadataDiscriminatorClass = new ClassMetadata($inputDiscriminatorClass);
+        $metadataDiscriminatorClass->addPropertyMetadata($propertyMetadataFoo);
+        $metadataDiscriminatorClass->addPropertyMetadata($propertyMetadataBar);
+
+        $metadataFactory->expects($this->any())
+            ->method('getMetadataForClass')
+            ->will($this->returnValueMap(
+                array(
+                    array($inputMainClass, $metadataMainClass),
+                    array($inputDiscriminatorClass, $metadataDiscriminatorClass)
+                )
+            ));
+
+        $propertyNamingStrategy = new CamelCaseNamingStrategy();
+
+        $jmsMetadataParser = new JmsMetadataParser($metadataFactory, $propertyNamingStrategy, $docCommentExtractor);
+
+        // No group specified.
+        $output = $jmsMetadataParser->parse(
+            array(
+                'class'   => $inputMainClass,
+                'groups'  => array(),
+            )
+        );
+
+        $this->assertEquals(
+            array(
+                'foo' => array(
+                    'dataType'     => 'string',
+                    'actualType' => 'string',
+                    'subType' => '',
+                    'required'     => false,
+                    'default' => '',
+                    'description'  => null,
+                    'readonly'     => false,
+                    'sinceVersion' => null,
+                    'untilVersion' => null,
+                ),
+                'Nelmio\ApiDocBundle\Tests\Fixtures\Model\DiscriminatorClass' => array(
+                    'dataType'     => 'discriminatorClass',
+                    'required'     => false,
+                    'discriminatorClass'  => array(
+                        'foo' => array(
+                            'dataType'     => 'string',
+                            'actualType' => 'string',
+                            'subType' => '',
+                            'required'     => false,
+                            'default' => '',
+                            'description'  => null,
+                            'readonly'     => false,
+                            'sinceVersion' => null,
+                            'untilVersion' => null,
+                        ),
+                        'bar' => array(
+                            'dataType'     => 'string',
+                            'actualType' => 'string',
+                            'subType' => '',
+                            'required'     => false,
+                            'default' => '',
+                            'description'  => null,
+                            'readonly'     => false,
+                            'sinceVersion' => null,
+                            'untilVersion' => null,
+                        ),
+                        $discriminatorFieldName => array(
+                            'dataType'     => 'string',
+                            'required'     => true,
+                            'format'       => null,
+                            'description'  => 'type = TYPE_1',
+                            'readonly'     => false,
+                            'sinceVersion' => null,
+                            'untilVersion' => null,
+                        ),
+                    ),
                 ),
             ),
             $output

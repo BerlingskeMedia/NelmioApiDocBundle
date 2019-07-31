@@ -362,61 +362,6 @@ b:
   * Arbitrary: ["arg1","arg2"]
 
 
-### `GET` /tests.{_format} ###
-
-_index action_
-
-#### Requirements ####
-
-**_format**
-
-
-#### Filters ####
-
-a:
-
-  * DataType: integer
-
-b:
-
-  * DataType: string
-  * Arbitrary: ["arg1","arg2"]
-
-
-### `POST` /tests.{_format} ###
-
-_create test_
-
-#### Requirements ####
-
-**_format**
-
-
-#### Parameters ####
-
-a:
-
-  * type: string
-  * required: true
-  * description: A nice description
-
-b:
-
-  * type: string
-  * required: false
-
-c:
-
-  * type: boolean
-  * required: true
-
-d:
-
-  * type: string
-  * required: true
-  * default value: DefaultTest
-
-
 ### `POST` /tests.{_format} ###
 
 _create test_
@@ -485,11 +430,6 @@ dependency_type[a]:
   * type: string
   * required: true
   * description: A nice description
-
-
-### `ANY` /any ###
-
-_Action without HTTP verb_
 
 
 ### `ANY` /any/{foo} ###
@@ -641,6 +581,102 @@ _This method is useful to test if the getDocComment works._
   - Description: The param id
 
 
+### `ANY` /return-nested-extend-output ###
+
+
+#### Response ####
+
+foo:
+
+  * type: string
+
+bar:
+
+  * type: DateTime
+
+number:
+
+  * type: double
+
+arr:
+
+  * type: array
+
+nested:
+
+  * type: object (JmsNested)
+
+nested[foo]:
+
+  * type: DateTime
+
+nested[bar]:
+
+  * type: string
+
+nested[baz][]:
+
+  * type: array of integers
+  * description: Epic description.
+
+With multiple lines.
+
+nested[circular]:
+
+  * type: object (JmsNested)
+
+nested[parent]:
+
+  * type: object (JmsTest)
+
+nested[parent][foo]:
+
+  * type: string
+
+nested[parent][bar]:
+
+  * type: DateTime
+
+nested[parent][number]:
+
+  * type: double
+
+nested[parent][arr]:
+
+  * type: array
+
+nested[parent][nested]:
+
+  * type: object (JmsNested)
+
+nested[parent][nested_array][]:
+
+  * type: array of objects (JmsNested)
+
+nested[since]:
+
+  * type: string
+  * versions: >=0.2
+
+nested[until]:
+
+  * type: string
+  * versions: <=0.3
+
+nested[since_and_until]:
+
+  * type: string
+  * versions: >=0.4,<=0.5
+
+nested_array[]:
+
+  * type: array of objects (JmsNested)
+
+child:
+
+  * type: string
+
+
 ### `ANY` /return-nested-output ###
 
 
@@ -760,6 +796,17 @@ _Route with host placeholder_
   - Requirement: \d+
 
 
+### `GET` /z-action-with-constraint-requirements ###
+
+
+#### Filters ####
+
+mail:
+
+  * Requirement: Email
+  * Description: Email of someone.
+
+
 ### `GET` /z-action-with-deprecated-indicator ###
 ### This method is deprecated ###
 
@@ -822,6 +869,16 @@ param1:
   * type: string
   * required: true
   * description: Param1 description.
+
+
+### `GET` /z-query-requirement-param-not-set ###
+
+
+#### Filters ####
+
+param1:
+
+  * Description: Param1 description.
 
 
 ### `ANY` /z-return-jms-and-validator-output ###
