@@ -61,25 +61,6 @@ test_route_13:
     path: /authenticated
     defaults: { _controller: NelmioApiDocTestBundle:Test:authenticated }
 
-test_service_route_1:
-    path: /tests.{_format}
-    methods: [GET]
-    defaults: { _controller: nelmio.test.controller:indexAction, _format: json }
-
-test_service_route_2:
-    path: /tests.{_format}
-    host: api.test.dev
-    methods: [POST]
-    defaults: { _controller: nelmio.test.controller:postTestAction, _format: json }
-
-test_service_route_3:
-    path: /another
-    defaults: { _controller: nelmio.test.controller:anotherAction }
-
-test_service_route_4:
-    path: /any
-    defaults: { _controller: nelmio.test.controller:anyAction, _format: json }
-
 NelmioApiDocBundle:
     resource: "@NelmioApiDocBundle/Resources/config/routing.yml"
     prefix: /
@@ -110,7 +91,7 @@ test_return_nested_output:
 
 test_return_nested_extend_output:
     path: /return-nested-extend-output
-    defaults: { _controller: NelmioApiDocTestBundle:Test:jmsReturnNestedExtendOutput, _format: json }
+    defaults: { _controller: NelmioApiDocTestBundle:Test:jmsReturnNestedExtendedOutput, _format: json }
 
 test_route_18:
     path: /z-return-jms-and-validator-output
@@ -205,14 +186,14 @@ test_route_24:
 test_required_parameters:
     path: /api/other-resources/{id}.{_format}
     methods: [POST]
-    defaults: { _controller: NelmioApiDocTestBundle:Resource:requiredParametersAction, _format: json }
+    defaults: { _controller: NelmioApiDocTestBundle:Test:requiredParametersAction, _format: json }
     requirements:
         _format: json|xml|html
 
 test_patch_disables_required_parameters:
     path: /api/other-resources/{id}.{_format}
     methods: [PATCH]
-    defaults: { _controller: NelmioApiDocTestBundle:Resource:requiredParametersAction, _format: json }
+    defaults: { _controller: NelmioApiDocTestBundle:Test:requiredParametersAction, _format: json }
     requirements:
         _format: json|xml|html
 
@@ -229,7 +210,7 @@ test_route_26:
 test_route_27:
     path: /api/overrride/properties
     methods: [POST, PUT]
-    defaults: { _controller: NelmioApiDocTestBundle:Test:overrideJmsAnnotationWithApiDocPropertiesAction, _format: json }
+    defaults: { _controller: NelmioApiDocTestBundle:Test:overrideJmsAnnotationWithApiDocParametersAction, _format: json }
 
 test_route_28:
     path: /route_with_host.{_format}

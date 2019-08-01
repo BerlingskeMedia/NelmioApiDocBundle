@@ -1,7 +1,7 @@
 framework:
     secret:        test
     csrf_protection:
-        enabled: true
+        enabled: false
     router:        { resource: "%kernel.root_dir%/config/routing.yml" }
     validation:    { enabled: true, enable_annotations: true }
     form: ~
@@ -14,12 +14,13 @@ framework:
 
 # Twig Configuration
 twig:
-    debug:            %kernel.debug%
-    strict_variables: %kernel.debug%
+    debug:            '%kernel.debug%'
+    strict_variables: '%kernel.debug%'
 
 services:
-    nelmio.test.controller:
-        class: Nelmio\ApiDocBundle\Tests\Fixtures\Controller\TestServiceController
+    _defaults:
+        autowire: false
+        autoconfigure: false
     nelmio.test.type:
         class: Nelmio\ApiDocBundle\Tests\Fixtures\Form\DependencyType
         arguments:

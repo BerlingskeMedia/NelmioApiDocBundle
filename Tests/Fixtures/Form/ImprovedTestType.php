@@ -13,10 +13,9 @@ namespace Nelmio\ApiDocBundle\Tests\Fixtures\Form;
 
 use Nelmio\ApiDocBundle\Util\LegacyFormHelper;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\ChoiceList\SimpleChoiceList;
+use Symfony\Component\Form\ChoiceList\ArrayChoiceList;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
 class ImprovedTestType extends AbstractType
 {
@@ -41,17 +40,45 @@ class ImprovedTestType extends AbstractType
                 array('choices' => array('m' => 'Male', 'f' => 'Female')), LegacyFormHelper::isLegacy() ? array() : array('choices_as_values' => true)
             ))
             ->add('c2', $choiceType, array_merge(
-                array('choices' => array('m' => 'Male', 'f' => 'Female'), 'multiple' => true),
-                LegacyFormHelper::isLegacy() ? array() : array('choices_as_values' => true)
+                array(
+                    'choices' => array(
+                        'm' => 'Male',
+                        'f' => 'Female'
+                    ),
+                    'multiple' => true
+                ),
+                LegacyFormHelper::isLegacy()
+                    ? array()
+                    : array(
+                        'choice_label' => function($choice, $key, $value) {
+                            return $key;
+                        }
+                    )
             ))
             ->add('c3', $choiceType, array('choices' => array()))
-            ->add('c4', $choiceType, array_merge(
-                array('choices' => array('foo' => 'bar', 'bazgroup' => array('baz' => 'Buzz'))),
-                LegacyFormHelper::isLegacy() ? array() : array('choices_as_values' => true)
+            ->add(
+                'c4',
+                $choiceType,
+                array_merge(
+                    array(
+                        'choices' => array(
+                            'foo' => 'bar',
+                            'bazgroup' => array(
+                                'baz' => 'Buzz'
+                            )
+                        )
+                    ),
+                LegacyFormHelper::isLegacy()
+                    ? array()
+                    : array(
+                        'choice_label' => function($choice, $key, $value) {
+                            return $key;
+                        }
+                    )
             ))
             ->add('e1', LegacyFormHelper::isLegacy() ? new EntityType() : __NAMESPACE__.'\EntityType',
                 LegacyFormHelper::isLegacy()
-                    ? array('choice_list' => new SimpleChoiceList(array('foo' => 'bar', 'bazgroup' => array('baz' => 'Buzz'))))
+                    ? array('choice_list' => new ArrayChoiceList(array('foo' => 'bar', 'bazgroup' => array('baz' => 'Buzz'))))
                     : array('choices' => array('foo' => 'bar', 'bazgroup' => array('baz' => 'Buzz')), 'choices_as_values' => true)
             )
         ;
@@ -62,7 +89,7 @@ class ImprovedTestType extends AbstractType
      *
      * @deprecated Remove it when bumping requirements to Symfony 2.7+
      */
-    public function setDefaultOptions(OptionsResolverInterface $resolver)
+    public function setDefaultOptions(OptionsResolver $resolver)
     {
         $this->configureOptions($resolver);
     }

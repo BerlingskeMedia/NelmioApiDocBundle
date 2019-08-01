@@ -12,13 +12,13 @@
 namespace Nelmio\ApiDocBundle\Parser;
 
 use JMS\Serializer\Exclusion\GroupsExclusionStrategy;
+use JMS\Serializer\Metadata\PropertyMetadata;
+use JMS\Serializer\Metadata\VirtualPropertyMetadata;
+use JMS\Serializer\Naming\PropertyNamingStrategyInterface;
 use JMS\Serializer\SerializationContext;
 use Metadata\MetadataFactoryInterface;
 use Nelmio\ApiDocBundle\DataTypes;
 use Nelmio\ApiDocBundle\Util\DocCommentExtractor;
-use JMS\Serializer\Metadata\PropertyMetadata;
-use JMS\Serializer\Metadata\VirtualPropertyMetadata;
-use JMS\Serializer\Naming\PropertyNamingStrategyInterface;
 
 /**
  * Uses the JMS metadata factory to extract input/output model information
@@ -115,13 +115,7 @@ class JmsMetadataParser implements ParserInterface, PostParserInterface
         $params = array();
 
         $reflection = new \ReflectionClass($className);
-        $defaultProperties = array_map(function ($default) {
-            if (is_array($default) && count($default) === 0) {
-                return null;
-            }
-
-            return $default;
-        }, $reflection->getDefaultProperties());
+        $defaultProperties = $reflection->getDefaultProperties();
 
         // iterate over property metadata
         foreach ($meta->propertyMetadata as $item) {
@@ -156,6 +150,10 @@ class JmsMetadataParser implements ParserInterface, PostParserInterface
                     }
                 }
 
+                if (isset($item->position)) {
+                    $params[$name]['position'] = $item->position;
+                }
+
                 // we can use type property also for custom handlers, then we don't have here real class name
                 if (!class_exists($dataType['class'])) {
                     continue;
@@ -180,7 +178,62 @@ class JmsMetadataParser implements ParserInterface, PostParserInterface
             }
         }
 
+        if ($this->shouldReadDiscriminatorClasses($meta)) {
+            $discriminatorFieldName = $meta->discriminatorFieldName;
+
+            foreach ($meta->discriminatorMap as $discriminatorFieldValue => $discriminatorClass) {
+                $visited[] = $discriminatorClass;
+
+                $discriminatorClassProperties = $this->doParse($discriminatorClass, $visited, $groups);
+                $discriminatorClassProperties = $this->addDiscriminatorField(
+                    $discriminatorClassProperties,
+                    $discriminatorFieldName,
+                    $discriminatorFieldValue
+                );
+
+                $params[$discriminatorClass] = array(
+                    'dataType'           => 'discriminatorClass',
+                    'required'           => false,
+                    'discriminatorClass' => $discriminatorClassProperties,
+                );
+            }
+        }
+
         return $params;
+    }
+
+    /**
+     * @param array $discriminatorClassProperties
+     * @param string $discriminatorFieldName
+     * @param string $discriminatorFieldValue
+     * @return array
+     */
+    private function addDiscriminatorField($discriminatorClassProperties, $discriminatorFieldName, $discriminatorFieldValue)
+    {
+        $discriminatorClassProperties[$discriminatorFieldName] = array(
+            'dataType'     => 'string',
+            'required'     => true,
+            'readonly'     => false,
+            'format'       => null,
+            'description'  => $discriminatorFieldName . ' = ' . $discriminatorFieldValue,
+            'sinceVersion' => null,
+            'untilVersion' => null,
+        );
+
+        return $discriminatorClassProperties;
+    }
+
+    /**
+     * @param mixed $meta
+     * @return bool
+     */
+    private function shouldReadDiscriminatorClasses($meta)
+    {
+        if (!empty($meta->discriminatorMap) && $meta->discriminatorBaseClass === $meta->name) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -261,32 +314,6 @@ class JmsMetadataParser implements ParserInterface, PostParserInterface
      */
     public function postParse(array $input, array $parameters)
     {
-        return $this->doPostParse($parameters, array(), isset($input['groups']) ? $input['groups'] : array());
-    }
-
-    /**
-     * Recursive `doPostParse` to avoid circular post parsing.
-     *
-     * @param  array $parameters
-     * @param  array $visited
-     * @return array
-     */
-    protected function doPostParse (array $parameters, array $visited = array(), array $groups = array())
-    {
-        foreach ($parameters as $param => $data) {
-            if (isset($data['class']) && isset($data['children']) && !in_array($data['class'], $visited)) {
-                $visited[] = $data['class'];
-
-                $input = array('class' => $data['class'], 'groups' => isset($data['groups']) ? $data['groups'] : array());
-                $parameters[$param]['children'] = array_merge(
-                    $parameters[$param]['children'], $this->doPostParse($parameters[$param]['children'], $visited, $groups)
-                );
-                $parameters[$param]['children'] = array_merge(
-                    $parameters[$param]['children'], $this->doParse($input['class'], $visited, $groups)
-                );
-            }
-        }
-
         return $parameters;
     }
 
