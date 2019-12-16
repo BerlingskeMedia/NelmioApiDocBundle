@@ -13,6 +13,7 @@ namespace Nelmio\ApiDocBundle\Tests\Annotation;
 
 use Nelmio\ApiDocBundle\Annotation\ApiDoc;
 use Nelmio\ApiDocBundle\Tests\TestCase;
+use Symfony\Component\Routing\Route;
 
 class ApiDocTest extends TestCase
 {
@@ -26,12 +27,14 @@ class ApiDocTest extends TestCase
         $this->assertTrue(is_array($array));
         $this->assertFalse(isset($array['filters']));
         $this->assertFalse($annot->isResource());
+        $this->assertEmpty($annot->getViews());
         $this->assertFalse($annot->getDeprecated());
         $this->assertFalse(isset($array['description']));
         $this->assertFalse(isset($array['requirements']));
         $this->assertFalse(isset($array['parameters']));
         $this->assertNull($annot->getInput());
         $this->assertFalse($array['authentication']);
+        $this->assertFalse(isset($array['headers']));
         $this->assertTrue(is_array($array['authenticationRoles']));
     }
 
@@ -179,27 +182,6 @@ class ApiDocTest extends TestCase
         $annot = new ApiDoc($data);
     }
 
-    public function testConstructNoFiltersIfFormTypeDefined()
-    {
-        $data = array(
-            'resource'      => true,
-            'description'   => 'Heya',
-            'input'         => 'My\Form\Type',
-            'filters'       => array(
-                array('name' => 'a-filter'),
-            ),
-        );
-
-        $annot = new ApiDoc($data);
-        $array = $annot->toArray();
-
-        $this->assertTrue(is_array($array));
-        $this->assertFalse(isset($array['filters']));
-        $this->assertTrue($annot->isResource());
-        $this->assertEquals($data['description'], $array['description']);
-        $this->assertEquals($data['input'], $annot->getInput());
-    }
-
     public function testConstructWithStatusCodes()
     {
         $data = array(
@@ -287,6 +269,136 @@ class ApiDocTest extends TestCase
         $this->assertTrue(is_array($array));
         $this->assertTrue(isset($array['parameters']['fooId']));
         $this->assertTrue(isset($array['parameters']['fooId']['dataType']));
+    }
+
+    public function testConstructWithHeaders()
+    {
+        $data = array(
+            'headers' => array(
+                array(
+                    'name' => 'headerName',
+                    'description' => 'Some description'
+                )
+            )
+        );
+
+        $annot = new ApiDoc($data);
+        $array = $annot->toArray();
+
+        $this->assertArrayHasKey('headerName', $array['headers']);
+        $this->assertNotEmpty($array['headers']['headerName']);
+
+        $keys = array_keys($array['headers']);
+        $this->assertEquals($data['headers'][0]['name'], $keys[0]);
+        $this->assertEquals($data['headers'][0]['description'], $array['headers']['headerName']['description']);
+    }
+
+    public function testConstructWithOneTag()
+    {
+        $data = array(
+            'tags' => 'beta'
+        );
+
+        $annot = new ApiDoc($data);
+        $array = $annot->toArray();
+
+        $this->assertTrue(is_array($array));
+        $this->assertTrue(is_array($array['tags']), 'Single tag should be put in array');
+        $this->assertEquals(array('beta'), $array['tags']);
+    }
+
+    public function testConstructWithOneTagAndColorCode()
+    {
+        $data = array(
+            'tags' => array(
+                'beta' => '#ff0000'
+            )
+        );
+
+        $annot = new ApiDoc($data);
+        $array = $annot->toArray();
+
+        $this->assertTrue(is_array($array));
+        $this->assertTrue(is_array($array['tags']), 'Single tag should be put in array');
+        $this->assertEquals(array('beta' => '#ff0000'), $array['tags']);
+    }
+
+    public function testConstructWithMultipleTags()
+    {
+        $data = array(
+            'tags' => array(
+                'experimental' => '#0000ff',
+                'beta' => '#0000ff',
+            )
+        );
+
+        $annot = new ApiDoc($data);
+        $array = $annot->toArray();
+
+        $this->assertTrue(is_array($array));
+        $this->assertTrue(is_array($array['tags']), 'Tags should be in array');
+        $this->assertEquals($data['tags'], $array['tags']);
+    }
+
+    public function testAlignmentOfOutputAndResponseModels()
+    {
+        $data = array(
+            'output' => 'FooBar',
+            'responseMap' => array(
+                400 => 'Foo\\ValidationErrorCollection',
+            ),
+        );
+
+        $apiDoc = new ApiDoc($data);
+
+        $map = $apiDoc->getResponseMap();
+
+        $this->assertCount(2, $map);
+        $this->assertArrayHasKey(200, $map);
+        $this->assertArrayHasKey(400, $map);
+        $this->assertEquals($data['output'], $map[200]);
+    }
+
+    public function testAlignmentOfOutputAndResponseModels2()
+    {
+        $data = array(
+            'responseMap' => array(
+                200 => 'FooBar',
+                400 => 'Foo\\ValidationErrorCollection',
+            ),
+        );
+
+        $apiDoc = new ApiDoc($data);
+        $map = $apiDoc->getResponseMap();
+
+        $this->assertCount(2, $map);
+        $this->assertArrayHasKey(200, $map);
+        $this->assertArrayHasKey(400, $map);
+        $this->assertEquals($apiDoc->getOutput(), $map[200]);
+    }
+
+    public function testSetRoute()
+    {
+        $route = new Route(
+            '/path/{foo}',
+            [
+                'foo' => 'bar',
+                'nested' => [
+                    'key1' => 'value1',
+                    'key2' => 'value2',
+                ]
+            ],
+            [],
+            [],
+            '{foo}.awesome_host.com'
+        );
+
+        $apiDoc = new ApiDoc([]);
+        $apiDoc->setRoute($route);
+
+        $this->assertSame($route, $apiDoc->getRoute());
+        $this->assertEquals('bar.awesome_host.com', $apiDoc->getHost());
+        $this->assertEquals('ANY', $apiDoc->getMethod());
     }
 
     public function testConstructWithRequestAndResponseBodyAsString()

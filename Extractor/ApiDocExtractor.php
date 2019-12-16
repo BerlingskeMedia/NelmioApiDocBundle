@@ -14,13 +14,15 @@ namespace Nelmio\ApiDocBundle\Extractor;
 use Doctrine\Common\Annotations\Reader;
 use Doctrine\Common\Util\ClassUtils;
 use Nelmio\ApiDocBundle\Annotation\ApiDoc;
+use Nelmio\ApiDocBundle\DataTypes;
 use Nelmio\ApiDocBundle\Parser\ParserInterface;
 use Nelmio\ApiDocBundle\Parser\PostParserInterface;
-use Symfony\Component\Routing\Route;
-use Symfony\Component\Routing\RouterInterface;
+use Nelmio\ApiDocBundle\Util\DocCommentExtractor;
+use Symfony\Bundle\FrameworkBundle\Controller\ControllerNameParser;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Nelmio\ApiDocBundle\Util\DocCommentExtractor;
+use Symfony\Component\Routing\Route;
+use Symfony\Component\Routing\RouterInterface;
 
 class ApiDocExtractor
 {
@@ -47,6 +49,11 @@ class ApiDocExtractor
     private $commentExtractor;
 
     /**
+     * @var ControllerNameParser
+     */
+    protected $controllerNameParser;
+
+    /**
      * @var ParserInterface[]
      */
     protected $parsers = array();
@@ -56,13 +63,20 @@ class ApiDocExtractor
      */
     protected $handlers;
 
-    public function __construct(ContainerInterface $container, RouterInterface $router, Reader $reader, DocCommentExtractor $commentExtractor, array $handlers)
+    /**
+     * @var AnnotationsProviderInterface[]
+     */
+    protected $annotationsProviders;
+
+    public function __construct(ContainerInterface $container, RouterInterface $router, Reader $reader, DocCommentExtractor $commentExtractor, ControllerNameParser $controllerNameParser, array $handlers, array $annotationsProviders)
     {
-        $this->container        = $container;
-        $this->router           = $router;
-        $this->reader           = $reader;
-        $this->commentExtractor = $commentExtractor;
-        $this->handlers         = $handlers;
+        $this->container            = $container;
+        $this->router               = $router;
+        $this->reader               = $reader;
+        $this->commentExtractor     = $commentExtractor;
+        $this->controllerNameParser = $controllerNameParser;
+        $this->handlers             = $handlers;
+        $this->annotationsProviders = $annotationsProviders;
     }
 
     /**
@@ -82,9 +96,9 @@ class ApiDocExtractor
      *
      * @return array
      */
-    public function all()
+    public function all($view = ApiDoc::DEFAULT_VIEW)
     {
-        return $this->extractAnnotations($this->getRoutes());
+        return $this->extractAnnotations($this->getRoutes(), $view);
     }
 
     /**
@@ -96,7 +110,7 @@ class ApiDocExtractor
      *
      * @return array
      */
-    public function extractAnnotations(array $routes)
+    public function extractAnnotations(array $routes, $view = ApiDoc::DEFAULT_VIEW)
     {
         $array     = array();
         $resources = array();
@@ -108,14 +122,17 @@ class ApiDocExtractor
             }
 
             if ($method = $this->getReflectionMethod($route->getDefault('_controller'))) {
-                $annotation = $this->reader->getMethodAnnotation($method, self::ANNOTATION_CLASS);
-                if ($annotation && !in_array($annotation->getSection(), $excludeSections)) {
+                $annotation = $this->reader->getMethodAnnotation($method, static::ANNOTATION_CLASS);
+                if (
+                    $annotation && !in_array($annotation->getSection(), $excludeSections) &&
+                    (in_array($view, $annotation->getViews()) || (0 === count($annotation->getViews()) && $view === ApiDoc::DEFAULT_VIEW))
+                ) {
                     if ($annotation->isResource()) {
                         if ($resource = $annotation->getResource()) {
                             $resources[] = $resource;
                         } else {
                             // remove format from routes used for resource grouping
-                            $resources[] = str_replace('.{_format}', '', $route->getPattern());
+                            $resources[] = str_replace('.{_format}', '', $route->getPath());
                         }
                     }
 
@@ -124,13 +141,20 @@ class ApiDocExtractor
             }
         }
 
+        foreach ($this->annotationsProviders as $annotationProvider) {
+            foreach ($annotationProvider->getAnnotations() as $annotation) {
+                $route = $annotation->getRoute();
+                $array[] = array('annotation' => $this->extractData($annotation, $route, $this->getReflectionMethod($route->getDefault('_controller'))));
+            }
+        }
+
         rsort($resources);
         foreach ($array as $index => $element) {
             $hasResource = false;
-            $pattern     = $element['annotation']->getRoute()->getPattern();
+            $path        = $element['annotation']->getRoute()->getPath();
 
             foreach ($resources as $resource) {
-                if (0 === strpos($pattern, $resource) || $resource === $element['annotation']->getResource()) {
+                if (0 === strpos($path, $resource) || $resource === $element['annotation']->getResource()) {
                     $array[$index]['resource'] = $resource;
 
                     $hasResource = true;
@@ -146,14 +170,14 @@ class ApiDocExtractor
         $methodOrder = array('GET', 'POST', 'PUT', 'DELETE');
         usort($array, function ($a, $b) use ($methodOrder) {
             if ($a['resource'] === $b['resource']) {
-                if ($a['annotation']->getRoute()->getPattern() === $b['annotation']->getRoute()->getPattern()) {
-                    $methodA = array_search($a['annotation']->getRoute()->getRequirement('_method'), $methodOrder);
-                    $methodB = array_search($b['annotation']->getRoute()->getRequirement('_method'), $methodOrder);
+                if ($a['annotation']->getRoute()->getPath() === $b['annotation']->getRoute()->getPath()) {
+                    $methodA = array_search($a['annotation']->getRoute()->getMethods(), $methodOrder);
+                    $methodB = array_search($b['annotation']->getRoute()->getMethods(), $methodOrder);
 
                     if ($methodA === $methodB) {
                         return strcmp(
-                            $a['annotation']->getRoute()->getRequirement('_method'),
-                            $b['annotation']->getRoute()->getRequirement('_method')
+                            implode('|', $a['annotation']->getRoute()->getMethods()),
+                            implode('|', $b['annotation']->getRoute()->getMethods())
                         );
                     }
 
@@ -161,8 +185,8 @@ class ApiDocExtractor
                 }
 
                 return strcmp(
-                    $a['annotation']->getRoute()->getPattern(),
-                    $b['annotation']->getRoute()->getPattern()
+                    $a['annotation']->getRoute()->getPath(),
+                    $b['annotation']->getRoute()->getPath()
                 );
             }
 
@@ -180,17 +204,34 @@ class ApiDocExtractor
      */
     public function getReflectionMethod($controller)
     {
+        if (false === strpos($controller, '::') && 2 === substr_count($controller, ':')) {
+            $controller = $this->controllerNameParser->parse($controller);
+        }
+
         if (preg_match('#(.+)::([\w]+)#', $controller, $matches)) {
             $class = $matches[1];
             $method = $matches[2];
-        } elseif (preg_match('#(.+):([\w]+)#', $controller, $matches)) {
-            $controller = $matches[1];
-            $method = $matches[2];
+        } else {
+            if (preg_match('#(.+):([\w]+)#', $controller, $matches)) {
+                $controller = $matches[1];
+                $method = $matches[2];
+            }
+
             if ($this->container->has($controller)) {
-                $this->container->enterScope('request');
-                $this->container->set('request', new Request(), 'request');
+                // BC SF < 3.0
+                if (method_exists($this->container, 'enterScope')) {
+                    $this->container->enterScope('request');
+                    $this->container->set('request', new Request(), 'request');
+                }
                 $class = ClassUtils::getRealClass(get_class($this->container->get($controller)));
-                $this->container->leaveScope('request');
+                // BC SF < 3.0
+                if (method_exists($this->container, 'enterScope')) {
+                    $this->container->leaveScope('request');
+                }
+
+                if (!isset($method) && method_exists($class, '__invoke')) {
+                    $method = '__invoke';
+                }
             }
         }
 
@@ -214,7 +255,7 @@ class ApiDocExtractor
     public function get($controller, $route)
     {
         if ($method = $this->getReflectionMethod($controller)) {
-            if ($annotation = $this->reader->getMethodAnnotation($method, self::ANNOTATION_CLASS)) {
+            if ($annotation = $this->reader->getMethodAnnotation($method, static::ANNOTATION_CLASS)) {
                 if ($route = $this->router->getRouteCollection()->get($route)) {
                     return $this->extractData($annotation, $route, $method);
                 }
@@ -279,31 +320,84 @@ class ApiDocExtractor
             }
 
             $parameters = $this->clearClasses($parameters);
+            $parameters = $this->generateHumanReadableTypes($parameters);
 
-            if ('PUT' === $method) {
-                // All parameters are optional with PUT (update)
-                array_walk($parameters, function ($val, $key) use (&$data) {
+            if ('PATCH' === $annotation->getMethod()) {
+                // All parameters are optional with PATCH (update)
+                foreach ($parameters as $key => $val) {
                     $parameters[$key]['required'] = false;
-                });
+                }
             }
 
+            // merge parameters with parameters block from ApiDoc annotation in controller method
+            $parameters = $this->mergeParameters($parameters, $annotation->getParameters());
             $annotation->setParameters($parameters);
         }
 
         // output (populates 'response' for the formatters)
         if (null !== $output = $annotation->getOutput()) {
             $response         = array();
+            $supportedParsers = array();
+
             $normalizedOutput = $this->normalizeClassParameter($output);
 
             foreach ($this->getParsers($normalizedOutput) as $parser) {
                 if ($parser->supports($normalizedOutput)) {
+                    $supportedParsers[] = $parser;
                     $response = $this->mergeParameters($response, $parser->parse($normalizedOutput));
                 }
             }
 
+            foreach ($supportedParsers as $parser) {
+                if ($parser instanceof PostParserInterface) {
+                    $mp = $parser->postParse($normalizedOutput, $response);
+                    $response = $this->mergeParameters($response, $mp);
+                }
+            }
+
             $response = $this->clearClasses($response);
+            $response = $this->generateHumanReadableTypes($response);
 
             $annotation->setResponse($response);
+            $annotation->setResponseForStatusCode($response, $normalizedOutput, 200);
+        }
+
+        if (count($annotation->getResponseMap()) > 0) {
+
+            foreach ($annotation->getResponseMap() as $code => $modelName) {
+
+                if ('200' === (string) $code && isset($modelName['type']) && isset($modelName['model'])) {
+                    /*
+                     * Model was already parsed as the default `output` for this ApiDoc.
+                     */
+                    continue;
+                }
+
+                $normalizedModel = $this->normalizeClassParameter($modelName);
+
+                $parameters = array();
+                $supportedParsers = array();
+                foreach ($this->getParsers($normalizedModel) as $parser) {
+                    if ($parser->supports($normalizedModel)) {
+                        $supportedParsers[] = $parser;
+                        $parameters = $this->mergeParameters($parameters, $parser->parse($normalizedModel));
+                    }
+                }
+
+                foreach ($supportedParsers as $parser) {
+                    if ($parser instanceof PostParserInterface) {
+                        $mp = $parser->postParse($normalizedModel, $parameters);
+                        $parameters = $this->mergeParameters($parameters, $mp);
+                    }
+                }
+
+                $parameters = $this->clearClasses($parameters);
+                $parameters = $this->generateHumanReadableTypes($parameters);
+
+                $annotation->setResponseForStatusCode($parameters, $normalizedModel, $code);
+
+            }
+
         }
 
         return $annotation;
@@ -314,11 +408,30 @@ class ApiDocExtractor
         $defaults = array(
             'class'   => '',
             'groups'  => array(),
+            'options'  => array(),
         );
 
         // normalize strings
         if (is_string($input)) {
             $input = array('class' => $input);
+        }
+
+        $collectionData = array();
+
+        /*
+         * Match array<Fully\Qualified\ClassName> as alias; "as alias" optional.
+         */
+        if (preg_match_all("/^array<([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)>(?:\\s+as\\s+(.+))?$/", $input['class'], $collectionData)) {
+            $input['class'] = $collectionData[1][0];
+            $input['collection'] = true;
+            $input['collectionName'] = $collectionData[2][0];
+        } elseif (preg_match('/^array</', $input['class'])) { //See if a collection directive was attempted. Must be malformed.
+            throw new \InvalidArgumentException(
+                sprintf(
+                    'Malformed collection directive: %s. Proper format is: array<Fully\\Qualified\\ClassName> or array<Fully\\Qualified\\ClassName> as collectionName',
+                    $input['class']
+                )
+            );
         }
 
         // normalize groups
@@ -336,6 +449,10 @@ class ApiDocExtractor
      *  - Requirement parameters are concatenated.
      *  - Other string values are overridden by later parsers when present.
      *  - Array parameters are recursively merged.
+     *  - Non-null default values prevail over null default values. Later values overrides previous defaults.
+     *
+     * However, if newly-returned parameter array contains a parameter with NULL, the parameter is removed from the merged results.
+     * If the parameter is not present in the newly-returned array, then it is left as-is.
      *
      * @param  array $p1 The pre-existing parameters array.
      * @param  array $p2 The newly-returned parameters array.
@@ -346,9 +463,15 @@ class ApiDocExtractor
         $params = $p1;
 
         foreach ($p2 as $propname => $propvalue) {
+
+            if ($propvalue === null) {
+                unset($params[$propname]);
+                continue;
+            }
+
             if (!isset($p1[$propname])) {
                 $params[$propname] = $propvalue;
-            } else {
+            } elseif (is_array($propvalue)) {
                 $v1 = $p1[$propname];
 
                 foreach ($propvalue as $name => $value) {
@@ -366,6 +489,12 @@ class ApiDocExtractor
                                 $v1[$name] .= ', ' . $value;
                             } else {
                                 $v1[$name] = $value;
+                            }
+                        } elseif ($name == 'default') {
+                            if (isset($v1[$name])) {
+                                $v1[$name] = isset($value) ? $value : $v1[$name];
+                            } else {
+                                $v1[$name] = isset($value) ? $value : null;
                             }
                         } else {
                             $v1[$name] = $value;
@@ -412,6 +541,66 @@ class ApiDocExtractor
         }
 
         return $array;
+    }
+
+    /**
+     * Populates the `dataType` properties in the parameter array if empty. Recurses through children when necessary.
+     *
+     * @param  array $array
+     * @return array
+     */
+    protected function generateHumanReadableTypes(array $array)
+    {
+        foreach ($array as $name => $info) {
+
+            if (empty($info['dataType']) && isset($info['subType'])) {
+                $array[$name]['dataType'] = $this->generateHumanReadableType($info['actualType'], $info['subType']);
+            }
+
+            if (isset($info['children'])) {
+                $array[$name]['children'] = $this->generateHumanReadableTypes($info['children']);
+            }
+        }
+
+        return $array;
+    }
+
+    /**
+     * Creates a human-readable version of the `actualType`. `subType` is taken into account.
+     *
+     * @param  string $actualType
+     * @param  string $subType
+     * @return string
+     */
+    protected function generateHumanReadableType($actualType, $subType)
+    {
+        if ($actualType == DataTypes::MODEL) {
+
+            if (class_exists($subType)) {
+                $parts = explode('\\', $subType);
+
+                return sprintf('object (%s)', end($parts));
+            }
+
+            return sprintf('object (%s)', $subType);
+        }
+
+        if ($actualType == DataTypes::COLLECTION) {
+
+            if (DataTypes::isPrimitive($subType)) {
+                return sprintf('array of %ss', $subType);
+            }
+
+            if (class_exists($subType)) {
+                $parts = explode('\\', $subType);
+
+                return sprintf('array of objects (%s)', end($parts));
+            }
+
+            return sprintf('array of objects (%s)', $subType);
+        }
+
+        return $actualType;
     }
 
     private function getParsers(array $parameters)

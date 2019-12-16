@@ -1,7 +1,7 @@
 framework:
     secret:        test
     csrf_protection:
-        enabled: true
+        enabled: false
     router:        { resource: "%kernel.root_dir%/config/routing.yml" }
     validation:    { enabled: true, enable_annotations: true }
     form: ~
@@ -14,18 +14,23 @@ framework:
 
 # Twig Configuration
 twig:
-    debug:            %kernel.debug%
-    strict_variables: %kernel.debug%
+    debug:            '%kernel.debug%'
+    strict_variables: '%kernel.debug%'
 
 services:
-    nemlio.test.controller:
-        class: Nelmio\ApiDocBundle\Tests\Fixtures\Controller\TestServiceController
+    _defaults:
+        autowire: false
+        autoconfigure: false
     nelmio.test.type:
         class: Nelmio\ApiDocBundle\Tests\Fixtures\Form\DependencyType
         arguments:
             - [foo, bar]
         tags:
-            - { name: form.type, alias: dependency_type }
+            - { name: form.type, alias: dependency_type, extended_type: Nelmio\ApiDocBundle\Tests\Fixtures\Form\DependencyType }
+
+parameters:
+    domain_prod: test.com
+    domain_dev: test.dev
 
 #JMS Serializer config for testing JmsMetadataParser
 jms_serializer:
@@ -53,4 +58,21 @@ jms_serializer:
         auto_detection: true
 
 nelmio_api_doc:
+    sandbox:
+        authentication:
+            delivery: header
+            name: access_token
+    cache:
+        enabled: true
     exclude_sections: ["private", "exclusive"]
+    swagger:
+        api_base_path: /api
+        swagger_version: 1.2
+        api_version: 3.14
+        info:
+            title: Nelmio Swagger
+            description: Testing Swagger integration.
+            TermsOfServiceUrl: https://github.com
+            contact: user@domain.tld
+            license: MIT
+            licenseUrl: http://opensource.org/licenses/MIT
